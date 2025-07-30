@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  postgres:
+    # postgres:17.2 is supported on aws rds
+    image: postgres:17.2
+    ports:
+      - ${PGPORT}:${PGPORT}
+    environment:
+      POSTGRES_USER: ${PGUSERNAME}
+      POSTGRES_PASSWORD: ${PGPASSWORD}
+      POSTGRES_DB: ${PGDATABASE}
+      PGPORT: ${PGPORT}
+    volumes:
+      - ./.db:/var/lib/postgresql/data

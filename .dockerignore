@@ -1,0 +1,7 @@
+node_modules
+.db
+dist
+# IDE
+.idea
+deploy
+.windsurfrules

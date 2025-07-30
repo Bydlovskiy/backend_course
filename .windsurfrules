@@ -1,0 +1,35 @@
+Project structure:
+src/
+├── api/                          # API module
+│   ├── api.ts                    # Server setup
+│   ├── errors/                   # Error handling
+│   ├── hooks/                    # Route hooks
+│   ├── plugins/                  # Fastify plugins
+│   └── routes/                   # API routes
+│       ├── admin/                # Admin panel routes
+│       ├── manager/              # Manager panel routes
+│       ├── me/                   # User profile
+│       ├── public/               # Public routes
+│       ├── schemas/              # All schemas for API routes
+│       └── user/                 # User routes
+├── consumers/                    # Message queue consumers
+├── controllers/                  # Controllers
+├── lambdas/                      # Lambda functions
+├── services/                     # Services
+│   ├── aws/                      # AWS integrations
+│   │   ├── cognito/              # Authentication
+│   │   ├── kms/                  # Encryption
+│   │   ├── s3/                   # File storage
+│   │   └── sqs/                  # Message queues
+│   ├── drizzle/                  # Database
+│   ├── env/                      # Environment configuration
+│   ├── sendgrid/                 # Email service
+│   └── uuid/                     # ID generation
+├── repos/                        # Database repositories
+├── types/                        # TypeScript types
+
+Additional files in root:
+├── package.json                  # Dependencies and scripts
+├── tsconfig.json                  # TypeScript configuration
+├── docker-compose.local.yml      # Docker configuration
+├── README.md                     # Project documentation

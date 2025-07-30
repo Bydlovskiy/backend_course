@@ -1,0 +1,60 @@
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "plugins": [
+    "@typescript-eslint/eslint-plugin"
+  ],
+  "extends": [
+    "plugin:@typescript-eslint/recommended"
+  ],
+  "ignorePatterns": [
+    "node_modules/",
+    "dist/",
+    "migrations/"
+  ],
+  "rules": {
+    "max-len": ["error", { "code": 130,
+      "ignoreStrings": true,
+      "ignoreTemplateLiterals": true,
+      "ignoreRegExpLiterals": true,
+      "ignorePattern": ",^\\s*import\\s.+\\sfrom\\s.+;$"
+    }],
+    "max-lines": ["error", { "max": 500, "skipBlankLines": false }],
+    "max-lines-per-function": ["error", {
+      "max": 800,
+      "skipBlankLines": true
+    }],
+    "max-depth": ["error", 3],
+    "@typescript-eslint/no-var-requires": "off",
+    "@typescript-eslint/ban-ts-comment": "off",
+    "@typescript-eslint/no-unsafe-return": "off",
+    "@typescript-eslint/interface-name-prefix": "off",
+    "@typescript-eslint/explicit-function-return-type": "off",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "dot-notation": "error",
+    "constructor-super": "error",
+    "no-param-reassign": ["error", { "props": true }],
+    "no-multiple-empty-lines": ["error", { "max": 1 }],
+//    "indent": ["error", 2],
+    "eol-last": ["error", "never"],
+    "quotes": ["error", "single"],
+    "object-curly-spacing": ["error", "always"],
+    "curly": "error",
+    "no-async-promise-executor": ["error"],
+    "no-console": "error",
+    "semi": "error",
+    "comma-dangle": "error",
+    "object-shorthand": [
+      "error",
+      "always"
+    ],
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+          "args": "all",
+          "argsIgnorePattern": "^_"
+      }
+    ]
+  }
+}
