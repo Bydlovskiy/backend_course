@@ -22,15 +22,26 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
           title: postsTable.title,
           description: postsTable.description,
           createdAt: postsTable.createdAt,
-          updatedAt: postsTable.updatedAt,
-          commentsCount: sql<number>`count(${commentsTable.id})::int`
+          updatedAt: postsTable.updatedAt
         })
         .from(postsTable)
-        .where(eq(postsTable.id, id))
-        .leftJoin(commentsTable, eq(postsTable.id, commentsTable.postId))
-        .groupBy(postsTable.id);
+        .where(eq(postsTable.id, id));
       
-      return post.length > 0 ? GetPostByIdRespSchema.parse(post[0]) : null;
+      if (post.length === 0) {
+        return null;
+      }
+
+      // Get comments for this post
+      const comments = await db
+        .select()
+        .from(commentsTable)
+        .where(eq(commentsTable.postId, id))
+        .orderBy(commentsTable.createdAt);
+      
+      return GetPostByIdRespSchema.parse({
+        ...post[0],
+        comments
+      });
     },
 
     async getAllPosts() {
@@ -40,14 +51,19 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
           title: postsTable.title,
           description: postsTable.description,
           createdAt: postsTable.createdAt,
-          updatedAt: postsTable.updatedAt
+          updatedAt: postsTable.updatedAt,
+          commentsCount: sql<number>`count(${commentsTable.id})::int`
         })
         .from(postsTable)
         .leftJoin(commentsTable, eq(postsTable.id, commentsTable.postId))
         .groupBy(postsTable.id)
         .orderBy(postsTable.createdAt);
 
-      return result.length > 0 ? GetPostsListRespSchema.parse({ posts: result }) : null;
+      if (result.length === 0) {
+        return null;
+      }
+      
+      return GetPostsListRespSchema.parse({ posts: result });
     },
 
     async updatePostById(id: string, data: UpdatePostByIdInput) {

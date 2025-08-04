@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { CreateCommentResSchema } from '../comment/CreateCommentResSchema';
 
 export const GetPostByIdRespSchema = z.object({
   id: z.string(),
@@ -6,7 +7,7 @@ export const GetPostByIdRespSchema = z.object({
   description: z.string(),
   updatedAt: z.date(),
   createdAt: z.date(),
-  commentsCount: z.number().optional().nullable()
+  comments: z.array(CreateCommentResSchema)
 });
 
 export type Post = z.infer<typeof GetPostByIdRespSchema>;

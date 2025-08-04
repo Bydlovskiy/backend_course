@@ -15,6 +15,13 @@
       "when": 1754219917647,
       "tag": "0001_redundant_roulette",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1754302842972,
+      "tag": "0002_typical_vivisector",
+      "breakpoints": true
     }
   ]
 }
