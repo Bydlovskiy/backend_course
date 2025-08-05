@@ -1,19 +1,20 @@
 import { eq, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+
 import { postsTable } from '../services/drizzle/schemas/schema';
+import { commentsTable } from '../services/drizzle/schemas/schema';
 import { IPostRepo } from '../types/repos/IPostRepo';
+
 import { UpdatePostByIdInput } from 'src/api/routes/schemas/post/UpdatePostByIdReqSchema';
 import { CreatePostInput } from 'src/api/routes/schemas/post/CreatePostReqSchema';
-import { commentsTable } from '../services/drizzle/schemas/schema';
-import { GetPostsListRespSchema } from 'src/api/routes/schemas/post/GetPostsListRespSchema';
-import { GetPostByIdRespSchema } from 'src/api/routes/schemas/post/GetPostByIdRespSchema';
-// import { CreateCommentResSchema } from 'src/api/routes/schemas/comment/CreateCommentResSchema';
+
+import { PostSchema, PostListSchema } from 'src/types/IPost';
 
 export function getPostRepo(db: NodePgDatabase): IPostRepo {
   return {
     async createPost(data: CreatePostInput) {
       const post = await db.insert(postsTable).values(data as any).returning();
-      return GetPostByIdRespSchema.parse(post[0]);
+      return PostSchema.parse(post[0]);
     },
 
     async getPostById(id: string) {
@@ -23,11 +24,12 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
         .leftJoin(commentsTable, eq(postsTable.id, commentsTable.postId))
         .where(eq(postsTable.id, id));
       
+      console.log(results);
       if (results.length === 0) {
         return null;
       }
 
-      return GetPostByIdRespSchema.parse({
+      return PostSchema.parse({
         ...results[0].posts,
         comments: results.map(el => el.comments).filter(Boolean)
       });
@@ -44,7 +46,6 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
           commentsCount: sql<number>`count(${commentsTable.id})::int`
         })
         .from(postsTable)
-        .leftJoin(commentsTable, eq(postsTable.id, commentsTable.postId))
         .groupBy(postsTable.id)
         .orderBy(postsTable.createdAt);
 
@@ -52,7 +53,7 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
         return null;
       }
       
-      return GetPostsListRespSchema.parse({ posts: result });
+      return PostListSchema.parse({ posts: result });
     },
 
     async updatePostById(id: string, data: UpdatePostByIdInput) {
@@ -62,7 +63,7 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
         .where(eq(postsTable.id, id))
         .returning();
       
-      return posts.length > 0 ? GetPostByIdRespSchema.parse(posts[0]) : null;
+      return posts.length > 0 ? PostSchema.parse(posts[0]) : null;
     }
   };
 }

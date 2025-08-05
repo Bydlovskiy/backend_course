@@ -1,4 +1,4 @@
-import { Comment } from 'src/api/routes/schemas/comment/CreateCommentResSchema';
+import { Comment } from '../IComment';
 
 export interface ICommentRepo {
   createComment(data: { text: string, postId: string }): Promise<Comment>;

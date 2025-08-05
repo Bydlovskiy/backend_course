@@ -1,4 +1,5 @@
 import { IPostRepo } from 'src/types/repos/IPostRepo';
+import { HttpError } from 'src/api/errors/HttpError';  
 
 export async function getAllPosts(params: {
   postRepo: IPostRepo;
@@ -6,7 +7,7 @@ export async function getAllPosts(params: {
   const posts = await params.postRepo.getAllPosts();
 
   if (!posts) {
-    throw new Error('Posts not found');
+    throw new HttpError(400, 'Posts not found');
   }
 
   return posts;

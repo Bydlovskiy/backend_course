@@ -1,8 +1,9 @@
 import { eq } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { CommentSchema } from '../types/IComment';
 import { commentsTable } from '../services/drizzle/schemas/schema';
 import { ICommentRepo } from '../types/repos/ICommentRepo';
-import { CreateCommentResSchema } from 'src/api/routes/schemas/comment/CreateCommentResSchema';
+
 import { UpdateCommentByIdInput } from 'src/api/routes/schemas/comment/UpdateCommentByIdReqSchema';
 
 export function getCommentRepo(db: NodePgDatabase): ICommentRepo {
@@ -12,7 +13,7 @@ export function getCommentRepo(db: NodePgDatabase): ICommentRepo {
         text: data.text,
         postId: data.postId
       }).returning();
-      return CreateCommentResSchema.parse(comment[0]);
+      return CommentSchema.parse(comment[0]);
     },
 
     async getCommentsByPostId(postId: string) {
@@ -22,7 +23,7 @@ export function getCommentRepo(db: NodePgDatabase): ICommentRepo {
         .where(eq(commentsTable.postId, postId))
         .orderBy(commentsTable.createdAt);
       
-      return comments.map(comment => CreateCommentResSchema.parse(comment));
+      return comments.map(comment => CommentSchema.parse(comment));
     },
 
     async updateCommentById(id: string, data: UpdateCommentByIdInput) {
@@ -32,7 +33,7 @@ export function getCommentRepo(db: NodePgDatabase): ICommentRepo {
         .where(eq(commentsTable.id, id))
         .returning();
       
-      return comments.length > 0 ? CreateCommentResSchema.parse(comments[0]) : null;
+      return comments.length > 0 ? CommentSchema.parse(comments[0]) : null;
     }
   };
 }

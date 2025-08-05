@@ -1,5 +1,4 @@
-import { PostList } from 'src/api/routes/schemas/post/GetPostsListRespSchema';
-import { Post } from 'src/api/routes/schemas/post/GetPostByIdRespSchema';
+import { Post, PostList } from 'src/types/IPost';
 
 export interface IPostRepo {
   getAllPosts(): Promise<PostList | null>;

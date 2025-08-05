@@ -1,5 +1,6 @@
 import { IPostRepo } from 'src/types/repos/IPostRepo';
 import { Post } from 'src/api/routes/schemas/post/GetPostByIdRespSchema';
+import { HttpError } from 'src/api/errors/HttpError';  
 
 export async function updatePostById(params: {
   postRepo: IPostRepo;
@@ -9,7 +10,7 @@ export async function updatePostById(params: {
   const post = await params.postRepo.updatePostById(params.postId, params.data);
   
   if (!post) {
-    throw new Error('Post not found');
+    throw new HttpError(400, 'Post not found');
   }
 
   return post;

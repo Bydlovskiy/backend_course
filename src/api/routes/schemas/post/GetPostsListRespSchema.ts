@@ -8,7 +8,7 @@ export const GetPostsListRespSchema = z.object({
       description: z.string(),
       updatedAt: z.date(),
       createdAt: z.date(),
-      commentsCount: z.number()
+      commentsCount: z.number().optional()
     })
   )
 });
