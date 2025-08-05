@@ -1,9 +1,10 @@
 import { FastifyPluginAsync } from 'fastify';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
 
-import { CreatePostReqSchema } from '../schemas/post/CreatePostReqSchema';
-import { GetPostByIdRespSchema } from '../schemas/post/GetPostByIdRespSchema';
-import { GetPostsListRespSchema } from '../schemas/post/GetPostsListRespSchema';
+import { CreatePostReqSchema } from 'src/api/routes/schemas/post/CreatePostReqSchema';
+import { GetPostByIdRespSchema } from 'src/api/routes/schemas/post/GetPostByIdRespSchema';
+import { GetPostsListRespSchema } from 'src/api/routes/schemas/post/GetPostsListRespSchema';
+
 import { createPost } from 'src/controllers/post/create-post';
 import { getAllPosts } from 'src/controllers/post/get-all-posts';
 

@@ -7,7 +7,7 @@ export const GetPostByIdRespSchema = z.object({
   description: z.string(),
   updatedAt: z.date(),
   createdAt: z.date(),
-  comments: z.array(CreateCommentResSchema)
+  comments: z.array(CreateCommentResSchema).optional()
 });
 
 export type Post = z.infer<typeof GetPostByIdRespSchema>;

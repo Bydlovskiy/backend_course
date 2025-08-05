@@ -1,9 +1,11 @@
 import { z } from 'zod';
 import { FastifyPluginAsync } from 'fastify';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
-import { updateCommentById } from 'src/controllers/comment/update-comment-by-id';
+
 import { CreateCommentResSchema } from 'src/api/routes/schemas/comment/CreateCommentResSchema';
 import { UpdateCommentByIdReqSchema } from 'src/api/routes/schemas/comment/UpdateCommentByIdReqSchema';
+
+import { updateCommentById } from 'src/controllers/comment/update-comment-by-id';
 
 const routes: FastifyPluginAsync = async function (f) {
   const fastify = f.withTypeProvider<ZodTypeProvider>();

@@ -7,6 +7,7 @@ import { CreatePostInput } from 'src/api/routes/schemas/post/CreatePostReqSchema
 import { commentsTable } from '../services/drizzle/schemas/schema';
 import { GetPostsListRespSchema } from 'src/api/routes/schemas/post/GetPostsListRespSchema';
 import { GetPostByIdRespSchema } from 'src/api/routes/schemas/post/GetPostByIdRespSchema';
+// import { CreateCommentResSchema } from 'src/api/routes/schemas/comment/CreateCommentResSchema';
 
 export function getPostRepo(db: NodePgDatabase): IPostRepo {
   return {
@@ -16,31 +17,19 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
     },
 
     async getPostById(id: string) {
-      const post = await db
-        .select({
-          id: postsTable.id,
-          title: postsTable.title,
-          description: postsTable.description,
-          createdAt: postsTable.createdAt,
-          updatedAt: postsTable.updatedAt
-        })
+      const results = await db
+        .select()
         .from(postsTable)
+        .leftJoin(commentsTable, eq(postsTable.id, commentsTable.postId))
         .where(eq(postsTable.id, id));
       
-      if (post.length === 0) {
+      if (results.length === 0) {
         return null;
       }
 
-      // Get comments for this post
-      const comments = await db
-        .select()
-        .from(commentsTable)
-        .where(eq(commentsTable.postId, id))
-        .orderBy(commentsTable.createdAt);
-      
       return GetPostByIdRespSchema.parse({
-        ...post[0],
-        comments
+        ...results[0].posts,
+        comments: results.map(el => el.comments).filter(Boolean)
       });
     },
 
