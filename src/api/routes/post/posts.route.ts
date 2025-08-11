@@ -40,7 +40,8 @@ const routes: FastifyPluginAsync = async function (f) {
         page: z.coerce.number().int().min(1).optional(),
         searchQuery: z.string().optional(),
         sortBy: z.enum(['title', 'createdAt', 'commentsCount']).optional(),
-        sortDirection: z.enum(['asc', 'desc']).optional()
+        sortDirection: z.enum(['asc', 'desc']).optional(),
+        minCommentsCount: z.coerce.number().int().min(0).optional()
       })
     }
   }, async (req) => {
@@ -50,7 +51,8 @@ const routes: FastifyPluginAsync = async function (f) {
       offset: req.query.offset,
       searchQuery: req.query.searchQuery,
       sortBy: req.query.sortBy,
-      sortDirection: req.query.sortDirection
+      sortDirection: req.query.sortDirection,
+      minCommentsCount: req.query.minCommentsCount
     });
 
     return result;

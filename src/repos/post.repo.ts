@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { eq, count, or, ilike, desc, asc } from 'drizzle-orm';
+import { eq, count, or, ilike, desc, asc, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 import { postsTable } from 'src/services/drizzle/schemas/schema';
@@ -42,6 +42,7 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
       searchQuery?: string;
       sortBy?: SortField;
       sortDirection?: SortDirection;
+      minCommentsCount?: number;
     }) {
       if (params?.limit && params.limit > 100) {
         throw new HttpError(1001, 'Limit cannot exceed 100');
@@ -52,49 +53,66 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
       const searchQuery = params?.searchQuery?.trim();
       const sortBy = params?.sortBy ?? 'createdAt';
       const sortDirection = params?.sortDirection ?? 'desc';
+      const minCommentsCount = params?.minCommentsCount;
 
-      let whereClause = undefined;
+      let searchWhereClause = undefined;
       if (searchQuery) {
-        whereClause = or(
+        searchWhereClause = or(
           ilike(postsTable.title, `%${searchQuery}%`),
           ilike(postsTable.description, `%${searchQuery}%`)
         );
       }
       
-      const query = db
+      let commentsCountFilter = undefined;
+      if (minCommentsCount !== undefined && minCommentsCount > 0) {
+        commentsCountFilter = sql`"comments_count" >= ${minCommentsCount}`;
+      }
+      
+      const postsWithCommentCounts = db
         .select({
           id: postsTable.id,
           title: postsTable.title,
           description: postsTable.description,
           createdAt: postsTable.createdAt,
           updatedAt: postsTable.updatedAt,
-          commentsCount: count(commentsTable.id)
+          commentsCount: count(commentsTable.id).as('comments_count')
         })
         .from(postsTable)
         .leftJoin(commentsTable, eq(postsTable.id, commentsTable.postId))
-        .where(whereClause)
-        .groupBy(postsTable.id);
+        .where(searchWhereClause)
+        .groupBy(postsTable.id)
+        .as('posts_with_comments');
+      
+      const query = db.select().from(postsWithCommentCounts);
+      
+      if (commentsCountFilter) {
+        query.where(commentsCountFilter);
+      }
       
       switch (sortBy) {
         case 'title':
-          query.orderBy(sortDirection === 'asc' ? asc(postsTable.title) : desc(postsTable.title));
+          query.orderBy(sortDirection === 'asc' ? asc(postsWithCommentCounts.title) : desc(postsWithCommentCounts.title));
           break;
         case 'commentsCount':
-          query.orderBy(sortDirection === 'asc' ? asc(count(commentsTable.id)) : desc(count(commentsTable.id)));
+          query.orderBy(sortDirection === 'asc' ? asc(postsWithCommentCounts.commentsCount) : desc(postsWithCommentCounts.commentsCount));
           break;
         case 'createdAt':
         default:
-          query.orderBy(sortDirection === 'asc' ? asc(postsTable.createdAt) : desc(postsTable.createdAt));
+          query.orderBy(sortDirection === 'asc' ? asc(postsWithCommentCounts.createdAt) : desc(postsWithCommentCounts.createdAt));
           break;
       }
       
       const posts = await query.limit(limit).offset(offset);
 
-      const totalCountResult = await db
-        .select({ count: count() })
-        .from(postsTable)
-        .where(whereClause);
+      const totalCountQuery = db
+        .select({ count: sql`count(*)` })
+        .from(postsWithCommentCounts);
       
+      if (commentsCountFilter) {
+        totalCountQuery.where(commentsCountFilter);
+      }
+      
+      const totalCountResult = await totalCountQuery;
       const total = Number(totalCountResult[0]?.count) || 0;
       
       const page = Math.floor(offset / limit) + 1;

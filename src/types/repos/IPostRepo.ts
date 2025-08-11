@@ -24,6 +24,7 @@ export interface IPostRepo {
       searchQuery?: string;
       sortBy?: SortField;
       sortDirection?: SortDirection;
+      minCommentsCount?: number;
     }
   ): Promise<PostsResult>;
   createPost(data: Partial<Post>): Promise<Post>;
