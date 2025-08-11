@@ -1,10 +1,10 @@
 import { z } from 'zod';
-import { eq, count, or, ilike } from 'drizzle-orm';
+import { eq, count, or, ilike, desc, asc } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 import { postsTable } from 'src/services/drizzle/schemas/schema';
 import { commentsTable } from 'src/services/drizzle/schemas/schema';
-import { IPostRepo } from 'src/types/repos/IPostRepo';
+import { IPostRepo, SortDirection, SortField } from 'src/types/repos/IPostRepo';
 
 import { UpdatePostByIdInput } from 'src/types/post/IUpdatePostById';
 import { CreatePostInput } from 'src/types/post/ICreatePostInput';
@@ -40,6 +40,8 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
       limit?: number; 
       offset?: number; 
       searchQuery?: string;
+      sortBy?: SortField;
+      sortDirection?: SortDirection;
     }) {
       if (params?.limit && params.limit > 100) {
         throw new HttpError(1001, 'Limit cannot exceed 100');
@@ -48,6 +50,8 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
       const limit = params?.limit ?? 10;
       const offset = params?.offset ?? 0;
       const searchQuery = params?.searchQuery?.trim();
+      const sortBy = params?.sortBy ?? 'createdAt';
+      const sortDirection = params?.sortDirection ?? 'desc';
 
       let whereClause = undefined;
       if (searchQuery) {
@@ -57,7 +61,7 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
         );
       }
       
-      const posts = await db
+      const query = db
         .select({
           id: postsTable.id,
           title: postsTable.title,
@@ -69,11 +73,23 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
         .from(postsTable)
         .leftJoin(commentsTable, eq(postsTable.id, commentsTable.postId))
         .where(whereClause)
-        .groupBy(postsTable.id)
-        .limit(limit)
-        .offset(offset);
+        .groupBy(postsTable.id);
+      
+      switch (sortBy) {
+        case 'title':
+          query.orderBy(sortDirection === 'asc' ? asc(postsTable.title) : desc(postsTable.title));
+          break;
+        case 'commentsCount':
+          query.orderBy(sortDirection === 'asc' ? asc(count(commentsTable.id)) : desc(count(commentsTable.id)));
+          break;
+        case 'createdAt':
+        default:
+          query.orderBy(sortDirection === 'asc' ? asc(postsTable.createdAt) : desc(postsTable.createdAt));
+          break;
+      }
+      
+      const posts = await query.limit(limit).offset(offset);
 
-      // Отримання загальної кількості записів з урахуванням фільтрації
       const totalCountResult = await db
         .select({ count: count() })
         .from(postsTable)

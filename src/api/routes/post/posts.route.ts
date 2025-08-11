@@ -38,7 +38,9 @@ const routes: FastifyPluginAsync = async function (f) {
         limit: z.coerce.number().int().positive().optional(),
         offset: z.coerce.number().int().min(0).optional(),
         page: z.coerce.number().int().min(1).optional(),
-        searchQuery: z.string().optional()
+        searchQuery: z.string().optional(),
+        sortBy: z.enum(['title', 'createdAt', 'commentsCount']).optional(),
+        sortDirection: z.enum(['asc', 'desc']).optional()
       })
     }
   }, async (req) => {
@@ -46,7 +48,9 @@ const routes: FastifyPluginAsync = async function (f) {
       postRepo: fastify.repos.postRepo,
       limit: req.query.limit,
       offset: req.query.offset,
-      searchQuery: req.query.searchQuery
+      searchQuery: req.query.searchQuery,
+      sortBy: req.query.sortBy,
+      sortDirection: req.query.sortDirection
     });
 
     return result;

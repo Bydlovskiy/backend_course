@@ -1,4 +1,4 @@
-import { IPostRepo } from 'src/types/repos/IPostRepo';
+import { IPostRepo, SortDirection, SortField } from 'src/types/repos/IPostRepo';
 import { HttpError } from 'src/api/errors/HttpError';  
 
 export async function getAllPosts(params: {
@@ -6,11 +6,15 @@ export async function getAllPosts(params: {
   limit?: number;
   offset?: number;
   searchQuery?: string;
+  sortBy?: SortField;
+  sortDirection?: SortDirection;
 }) {
   const posts = await params.postRepo.getAllPosts({
     limit: params.limit ?? 10,
     offset: params.offset ?? 0,
-    searchQuery: params.searchQuery
+    searchQuery: params.searchQuery,
+    sortBy: params.sortBy,
+    sortDirection: params.sortDirection
   });
 
   if (!posts) {

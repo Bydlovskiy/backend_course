@@ -13,9 +13,18 @@ export interface PostsResult {
   meta: PaginationMeta;
 }
 
+export type SortField = 'title' | 'createdAt' | 'commentsCount';
+export type SortDirection = 'asc' | 'desc';
+
 export interface IPostRepo {
   getAllPosts(params?:
-    { limit?: number; offset?: number, searchQuery?: string; }
+    { 
+      limit?: number; 
+      offset?: number; 
+      searchQuery?: string;
+      sortBy?: SortField;
+      sortDirection?: SortDirection;
+    }
   ): Promise<PostsResult>;
   createPost(data: Partial<Post>): Promise<Post>;
   getPostById(id: string): Promise<Post | null>;
