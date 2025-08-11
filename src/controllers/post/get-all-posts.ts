@@ -5,10 +5,12 @@ export async function getAllPosts(params: {
   postRepo: IPostRepo;
   limit?: number;
   offset?: number;
+  searchQuery?: string;
 }) {
   const posts = await params.postRepo.getAllPosts({
-    limit: params.limit,
-    offset: params.offset
+    limit: params.limit ?? 10,
+    offset: params.offset ?? 0,
+    searchQuery: params.searchQuery
   });
 
   if (!posts) {

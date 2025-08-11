@@ -36,17 +36,20 @@ const routes: FastifyPluginAsync = async function (f) {
       },
       querystring: z.object({
         limit: z.coerce.number().int().positive().optional(),
-        offset: z.coerce.number().int().min(0).optional()
+        offset: z.coerce.number().int().min(0).optional(),
+        page: z.coerce.number().int().min(1).optional(),
+        searchQuery: z.string().optional()
       })
     }
   }, async (req) => {
-    const posts = await getAllPosts({
+    const result = await getAllPosts({
       postRepo: fastify.repos.postRepo,
       limit: req.query.limit,
-      offset: req.query.offset
+      offset: req.query.offset,
+      searchQuery: req.query.searchQuery
     });
 
-    return posts;
+    return result;
   });
 };
 
