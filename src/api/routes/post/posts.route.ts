@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { FastifyPluginAsync } from 'fastify';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
 
@@ -32,11 +33,17 @@ const routes: FastifyPluginAsync = async function (f) {
     schema: {
       response: {
         200: GetPostsListRespSchema
-      }
+      },
+      querystring: z.object({
+        limit: z.coerce.number().int().positive().optional(),
+        offset: z.coerce.number().int().min(0).optional()
+      })
     }
-  }, async () => {
+  }, async (req) => {
     const posts = await getAllPosts({
-      postRepo: fastify.repos.postRepo
+      postRepo: fastify.repos.postRepo,
+      limit: req.query.limit,
+      offset: req.query.offset
     });
 
     return posts;

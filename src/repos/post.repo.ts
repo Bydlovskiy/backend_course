@@ -35,7 +35,10 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
       });
     },
 
-    async getAllPosts() {
+    async getAllPosts(params: { limit: number; offset: number } = { limit: 10, offset: 0 }) {
+      const limit = params?.limit ?? 10;
+      const offset = params?.offset ?? 0;
+
       const result = await db
         .select({
           id: postsTable.id,
@@ -48,7 +51,9 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
         .from(postsTable)
         .leftJoin(commentsTable, eq(postsTable.id, commentsTable.postId))
         .groupBy(postsTable.id)
-        .orderBy(postsTable.createdAt);
+        .orderBy(postsTable.createdAt)
+        .limit(limit)
+        .offset(offset);
 
       if (result.length === 0) {
         return null;
