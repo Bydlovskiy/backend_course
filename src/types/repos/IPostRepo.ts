@@ -1,7 +1,7 @@
-import { Post, PostList } from 'src/types/IPost';
+import { Post } from 'src/types/post/IPost';
 
 export interface IPostRepo {
-  getAllPosts(): Promise<PostList | null>;
+  getAllPosts(): Promise<Post[] | null>;
   createPost(data: Partial<Post>): Promise<Post>;
   getPostById(id: string): Promise<Post | null>;
   updatePostById(id: string, data: Partial<Post>): Promise<Post | null>;

@@ -1,10 +1,10 @@
 import { eq } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { CommentSchema } from '../types/IComment';
-import { commentsTable } from '../services/drizzle/schemas/schema';
-import { ICommentRepo } from '../types/repos/ICommentRepo';
+import { CommentSchema } from 'src/types/comment/IComment';
+import { commentsTable } from 'src/services/drizzle/schemas/schema';
+import { ICommentRepo } from 'src/types/repos/ICommentRepo';
 
-import { UpdateCommentByIdInput } from 'src/api/routes/schemas/comment/UpdateCommentByIdReqSchema';
+import { UpdateCommentByIdInput } from 'src/types/comment/IUpdateCommentByIdInput';
 
 export function getCommentRepo(db: NodePgDatabase): ICommentRepo {
   return {

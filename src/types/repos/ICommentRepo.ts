@@ -1,4 +1,4 @@
-import { Comment } from '../IComment';
+import { Comment } from '../comment/IComment';
 
 export interface ICommentRepo {
   createComment(data: { text: string, postId: string }): Promise<Comment>;

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CommentSchema } from './IComment';
+import { CommentSchema } from '../comment/IComment';
 
 export const PostSchema = z.object({
   id: z.string().uuid(),
@@ -12,9 +12,3 @@ export const PostSchema = z.object({
 });
 
 export type Post = z.infer<typeof PostSchema>;
-
-export const PostListSchema = z.object({
-  posts: z.array(PostSchema)
-});
-
-export type PostList = z.infer<typeof PostListSchema>;

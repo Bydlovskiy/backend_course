@@ -1,14 +1,15 @@
-import { eq, sql } from 'drizzle-orm';
+import { z } from 'zod';
+import { eq, count } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 import { postsTable } from '../services/drizzle/schemas/schema';
 import { commentsTable } from '../services/drizzle/schemas/schema';
 import { IPostRepo } from '../types/repos/IPostRepo';
 
-import { UpdatePostByIdInput } from 'src/api/routes/schemas/post/UpdatePostByIdReqSchema';
-import { CreatePostInput } from 'src/api/routes/schemas/post/CreatePostReqSchema';
+import { UpdatePostByIdInput } from 'src/types/post/IUpdatePostById';
+import { CreatePostInput } from 'src/types/post/ICreatePostInput';
 
-import { PostSchema, PostListSchema } from 'src/types/IPost';
+import { PostSchema } from 'src/types/post/IPost';
 
 export function getPostRepo(db: NodePgDatabase): IPostRepo {
   return {
@@ -24,7 +25,6 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
         .leftJoin(commentsTable, eq(postsTable.id, commentsTable.postId))
         .where(eq(postsTable.id, id));
       
-      console.log(results);
       if (results.length === 0) {
         return null;
       }
@@ -43,9 +43,10 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
           description: postsTable.description,
           createdAt: postsTable.createdAt,
           updatedAt: postsTable.updatedAt,
-          commentsCount: sql<number>`count(${commentsTable.id})::int`
+          commentsCount: count(commentsTable.id)
         })
         .from(postsTable)
+        .leftJoin(commentsTable, eq(postsTable.id, commentsTable.postId))
         .groupBy(postsTable.id)
         .orderBy(postsTable.createdAt);
 
@@ -53,7 +54,7 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
         return null;
       }
       
-      return PostListSchema.parse({ posts: result });
+      return z.array(PostSchema).parse(result);
     },
 
     async updatePostById(id: string, data: UpdatePostByIdInput) {
