@@ -13,7 +13,10 @@ export const EnvSchema = z.object({
   PGPASSWORD: z.string(),
   PGDATABASE: z.string(),
   SWAGGER_USER: z.string(),
-  SWAGGER_PWD: z.string().min(10)
+  SWAGGER_PWD: z.string().min(10),
+  COGNITO_REGION: z.string(),
+  COGNITO_USER_POOL_ID: z.string(),
+  COGNITO_CLIENT_ID: z.string()
 });
 
 export type Env = z.infer<typeof EnvSchema>;

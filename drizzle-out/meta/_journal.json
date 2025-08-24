@@ -15,6 +15,13 @@
       "when": 1756035991827,
       "tag": "0001_hot_tinkerer",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1756058520511,
+      "tag": "0002_keen_stephen_strange",
+      "breakpoints": true
     }
   ]
 }

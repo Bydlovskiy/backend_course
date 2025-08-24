@@ -15,6 +15,7 @@ import requestId from './plugins/request-id.plugin';
 import responseTime from './plugins/response-time.plugin';
 import healthCheck from './plugins/health-check.plugin';
 import routePrinter from './plugins/route-printer.plugin';
+import { getAWSCognitoService } from 'src/services/aws/cognito/cognito.service';
 import { setupSwagger } from './plugins/swagger.plugin';
 import { getLoggerOptions } from './plugins/logger.plugin';
 import { getDb, dbHealthCheck } from 'src/services/drizzle/drizzle.service';
@@ -63,10 +64,10 @@ async function run() {
 
   // load context
   server.decorate('uuid', getUUIDService());
-  // server.decorate(
-  //   'identityService',
-  //   getAWSCognitoService(process.env.AWS_REGION)
-  // );
+  server.decorate(
+    'identityService',
+    getAWSCognitoService(process.env.COGNITO_REGION)
+  );
   server.decorate(
     'db',
     getDb({
