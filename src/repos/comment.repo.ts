@@ -37,6 +37,7 @@ export function getCommentRepo(db: NodePgDatabase): ICommentRepo {
         postId: data.postId,
         authorId: data.authorId
       }).returning();
+      
       return await fetchCommentWithAuthor(inserted[0].id);
     },
 

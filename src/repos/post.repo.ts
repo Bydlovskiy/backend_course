@@ -15,7 +15,6 @@ import { PostSchema } from 'src/types/post/IPost';
 import { HttpError } from 'src/api/errors/HttpError';
 
 export function getPostRepo(db: NodePgDatabase): IPostRepo {
-  // helper to fetch a single post with author and comments
   async function fetchPostWithAuthor(id: string) {
     const postAuthor = alias(profilesTable, 'post_author');
     const commentAuthor = alias(profilesTable, 'comment_author');
@@ -81,7 +80,7 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
       const sortDirection = params?.sortDirection ?? 'desc';
       const minCommentsCount = params?.minCommentsCount;
 
-      const similarityThreshold = 0.2;
+      const similarityThreshold = 0.3;
       let searchWhereClause = undefined as unknown as ReturnType<typeof sql> | undefined;
       if (searchQuery) {
         searchWhereClause = sql`(

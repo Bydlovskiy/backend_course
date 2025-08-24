@@ -120,7 +120,6 @@ export function getAWSCognitoService(region: string): IIdentityService {
   };
 }
 
-// Export a ready-to-use singleton for convenience
 export const identityService = getAWSCognitoService(
-  process.env.COGNITO_REGION || process.env.AWS_REGION || 'eu-north-1'
+  process.env.COGNITO_REGION
 );
