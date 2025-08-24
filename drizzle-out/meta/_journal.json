@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1754306854777,
-      "tag": "0000_white_shocker",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1756035991827,
-      "tag": "0001_hot_tinkerer",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1756058520511,
-      "tag": "0002_keen_stephen_strange",
+      "when": 1756064110560,
+      "tag": "0000_freezing_bromley",
       "breakpoints": true
     }
   ]

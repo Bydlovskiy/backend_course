@@ -1,4 +1,7 @@
 import { Post } from 'src/types/post/IPost';
+import { CreatePostInput } from 'src/types/post/ICreatePostInput';
+import { Profile } from 'src/types/profile/IProfile';
+import { Comment } from 'src/types/comment/IComment';
 
 export interface PaginationMeta {
   total: number;
@@ -8,8 +11,17 @@ export interface PaginationMeta {
   totalPages: number;
 }
 
+export type PostWithAuthor = Post & {
+  author: Profile;
+  comments?: (Comment & { author: Profile })[];
+};
+
+export type PostListItem = Omit<Post, 'comments'> & {
+  author: Profile;
+};
+
 export interface PostsResult {
-  posts: Post[];
+  posts: PostListItem[];
   meta: PaginationMeta;
 }
 
@@ -27,7 +39,7 @@ export interface IPostRepo {
       minCommentsCount?: number;
     }
   ): Promise<PostsResult>;
-  createPost(data: Partial<Post>): Promise<Post>;
-  getPostById(id: string): Promise<Post | null>;
-  updatePostById(id: string, data: Partial<Post>): Promise<Post | null>;
+  createPost(data: CreatePostInput): Promise<PostWithAuthor>;
+  getPostById(id: string): Promise<PostWithAuthor | null>;
+  updatePostById(id: string, data: Partial<Post>): Promise<PostWithAuthor | null>;
 }

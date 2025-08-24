@@ -42,7 +42,8 @@ const routes: FastifyPluginAsync = async function (f) {
     const post = await updatePostById({
       postRepo: fastify.repos.postRepo,
       postId: req.params.postId,
-      data: req.body
+      data: req.body,
+      currentUserId: req.profile?.id
     });
     return post;
   });

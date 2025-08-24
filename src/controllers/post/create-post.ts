@@ -1,10 +1,10 @@
 import { IPostRepo } from 'src/types/repos/IPostRepo';
-import { Post } from 'src/api/routes/schemas/post/GetPostByIdRespSchema';
+import { CreatePostInput } from 'src/types/post/ICreatePostInput';
 import { HttpError } from 'src/api/errors/HttpError';  
 
 export async function createPost(params: {
   postRepo: IPostRepo;
-  data: Partial<Post>;
+  data: CreatePostInput;
 }) {
   const post = await params.postRepo.createPost(params.data);
 

@@ -1,9 +1,11 @@
 import { z } from 'zod';
 import { eq, count, desc, asc, sql } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 import { postsTable } from 'src/services/drizzle/schemas/schema';
 import { commentsTable } from 'src/services/drizzle/schemas/schema';
+import { profilesTable } from 'src/services/drizzle/schemas/schema';
 import { IPostRepo, SortDirection, SortField } from 'src/types/repos/IPostRepo';
 
 import { UpdatePostByIdInput } from 'src/types/post/IUpdatePostById';
@@ -13,27 +15,51 @@ import { PostSchema } from 'src/types/post/IPost';
 import { HttpError } from 'src/api/errors/HttpError';
 
 export function getPostRepo(db: NodePgDatabase): IPostRepo {
+  // helper to fetch a single post with author and comments
+  async function fetchPostWithAuthor(id: string) {
+    const postAuthor = alias(profilesTable, 'post_author');
+    const commentAuthor = alias(profilesTable, 'comment_author');
+
+    const results = await db
+      .select({
+        post: postsTable,
+        postAuthor,
+        comment: commentsTable,
+        commentAuthor
+      })
+      .from(postsTable)
+      .innerJoin(postAuthor, eq(postsTable.authorId, postAuthor.id))
+      .leftJoin(commentsTable, eq(postsTable.id, commentsTable.postId))
+      .leftJoin(commentAuthor, eq(commentsTable.authorId, commentAuthor.id))
+      .where(eq(postsTable.id, id));
+
+    if (results.length === 0) {
+      return null;
+    }
+
+    const base = results[0];
+    const comments = results
+      .filter(r => r.comment)
+      .map(r => ({
+        ...r.comment!,
+        author: r.commentAuthor || undefined
+      }));
+
+    return {
+      ...PostSchema.parse(base.post),
+      author: base.postAuthor,
+      comments
+    } as any;
+  }
+
   return {
     async createPost(data: CreatePostInput) {
       const post = await db.insert(postsTable).values(data as any).returning();
-      return PostSchema.parse(post[0]);
+      return await fetchPostWithAuthor(post[0].id);
     },
 
     async getPostById(id: string) {
-      const results = await db
-        .select()
-        .from(postsTable)
-        .leftJoin(commentsTable, eq(postsTable.id, commentsTable.postId))
-        .where(eq(postsTable.id, id));
-      
-      if (results.length === 0) {
-        return null;
-      }
-
-      return PostSchema.parse({
-        ...results[0].posts,
-        comments: results.map(el => el.comments).filter(Boolean)
-      });
+      return await fetchPostWithAuthor(id);
     },
 
     async getAllPosts(params: { 
@@ -74,6 +100,7 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
           id: postsTable.id,
           title: postsTable.title,
           description: postsTable.description,
+          authorId: postsTable.authorId,
           createdAt: postsTable.createdAt,
           updatedAt: postsTable.updatedAt,
           commentsCount: count(commentsTable.id).as('comments_count')
@@ -84,7 +111,19 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
         .groupBy(postsTable.id)
         .as('posts_with_comments');
       
-      const query = db.select().from(postsWithCommentCounts);
+      const query = db
+        .select({
+          id: postsWithCommentCounts.id,
+          title: postsWithCommentCounts.title,
+          description: postsWithCommentCounts.description,
+          authorId: postsWithCommentCounts.authorId,
+          createdAt: postsWithCommentCounts.createdAt,
+          updatedAt: postsWithCommentCounts.updatedAt,
+          commentsCount: postsWithCommentCounts.commentsCount,
+          author: profilesTable
+        })
+        .from(postsWithCommentCounts)
+        .innerJoin(profilesTable, eq(postsWithCommentCounts.authorId, profilesTable.id));
       
       if (commentsCountFilter) {
         query.where(commentsCountFilter);
@@ -120,7 +159,19 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
       const totalPages = Math.ceil(total / limit);
 
       return {
-        posts: z.array(PostSchema).parse(posts),
+        posts: z.array(
+          PostSchema.extend({
+            author: z.object({
+              id: z.string().uuid(),
+              cognitoSub: z.string(),
+              email: z.string().email(),
+              firstName: z.string(),
+              lastName: z.string(),
+              createdAt: z.date(),
+              updatedAt: z.date()
+            })
+          })
+        ).parse(posts),
         meta: {
           total,
           limit,
@@ -132,13 +183,16 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
     },
 
     async updatePostById(id: string, data: UpdatePostByIdInput) {
-      const posts = await db
+      const post = await db
         .update(postsTable)
         .set(data)
         .where(eq(postsTable.id, id))
         .returning();
       
-      return posts.length > 0 ? PostSchema.parse(posts[0]) : null;
+      if (post.length === 0) {
+        return null;
+      }
+      return await fetchPostWithAuthor(post[0].id);
     }
   };
 }

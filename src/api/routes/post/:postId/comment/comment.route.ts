@@ -27,7 +27,8 @@ const routes: FastifyPluginAsync = async function (f) {
       data: {
         text: req.body.text
       },
-      postId: req.params.postId
+      postId: req.params.postId,
+      authorId: req.profile!.id
     });
     return post;
   });

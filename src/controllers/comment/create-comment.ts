@@ -6,10 +6,12 @@ export async function createComment(params: {
   commentRepo: ICommentRepo;
   data: CreateCommentInput;
   postId: string;
+  authorId: string;
 }) {
     const comment = await params.commentRepo.createComment({
       text: params.data.text,
-      postId: params.postId
+      postId: params.postId,
+      authorId: params.authorId
     });
 
     if (!comment) {

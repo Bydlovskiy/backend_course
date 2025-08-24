@@ -1,37 +1,37 @@
 import { preHandlerAsyncHookHandler } from 'fastify';
 import { HttpError } from '../errors/HttpError';
-import { identityService } from 'src/services/aws/cognito/cognito.service';
 
-const TOKEN_HEADER_NAME = 'authorization';
+const TOKEN_HEADER_NAME = 'Authorization';
 
 export const authHook: preHandlerAsyncHookHandler = async function (request) {
   if (request.routeOptions.config.skipAuth) {
     return;
   }
-
+  
   try {
-    const tokenHeader = request.headers[TOKEN_HEADER_NAME] as string | undefined;
-
-    if (!tokenHeader) {
+    const token = (request.headers[TOKEN_HEADER_NAME] 
+      || request.headers[TOKEN_HEADER_NAME.toLowerCase()]) as string;
+      
+    if (!token) {
       throw new Error('No token');
     }
 
-    const bearerTokenMatch = tokenHeader.match(/Bearer\s+([A-Za-z0-9-._~+/]+=*)$/);
+    const bearerTokenMatch = token.match(/Bearer\s+([A-Za-z0-9-._~+/]+=*)$/);
     if (!bearerTokenMatch) {
       throw new Error('Token in wrong format');
     }
 
     const [, bearerToken] = bearerTokenMatch;
-    const identityUser = await identityService.getUserByAccessToken(bearerToken);
+    const identityUser = await this.identityService.getUserByAccessToken(bearerToken);
 
-    const profile = await (request as any).repos.profileRepo.findByCognitoSub(identityUser.subId);
+    const profile = await this.repos.profileRepo.findByCognitoSub(identityUser.subId);
     if (!profile) {
       throw new Error('No profile');
     }
 
     request.log = request.log.child({
-      identityUserSub: identityUser.subId,
-      profileId: profile.id
+      identityUser,
+      profile
     });
 
     request.identityUser = identityUser;
