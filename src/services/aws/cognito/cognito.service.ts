@@ -45,7 +45,8 @@ export function getAWSCognitoService(region: string): IIdentityService {
           AccessToken: token
         });
 
-        const rawUserData = user.UserAttributes?.reduce<Record<string, string | null>>((acc, attribute) => {
+        const rawUserData = user.UserAttributes?.
+        reduce<Record<string, string | null>>((acc, attribute) => {
           if (attribute.Name) {
             return { ...acc, [attribute.Name]: attribute.Value || null };
           }

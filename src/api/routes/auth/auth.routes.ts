@@ -7,6 +7,13 @@ import { GetProfileResSchema } from 'src/api/routes/schemas/profile/GetProfileRe
 const routes: FastifyPluginAsync = async function (f) {
   const fastify = f.withTypeProvider<ZodTypeProvider>();
 
+  fastify.addHook('onRoute', (routeOptions) => {
+    if (!routeOptions.config) {
+      routeOptions.config = {};
+    }
+    routeOptions.config.skipAuth = true;
+  });
+
   fastify.post('/register', {
     schema: {
       body: z.object({

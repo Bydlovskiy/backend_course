@@ -5,8 +5,8 @@ import { IIdentityService } from 'src/types/IIdentityService';
 import { IMailService } from 'src/types/IMailService';
 import { IdentityUser } from 'src/types/IdentityUser';
 import { IStorageService } from './IStorageService';
+import { Profile } from 'src/types/profile/IProfile';
 
-// set context type
 declare module 'fastify' {
   interface FastifyInstance {
     uuid: IUUIDService;
@@ -19,5 +19,10 @@ declare module 'fastify' {
 
   interface FastifyRequest {
     identityUser?: IdentityUser;
+    profile?: Profile;
+  }
+
+  interface FastifyContextConfig {
+    skipAuth?: boolean;
   }
 }
