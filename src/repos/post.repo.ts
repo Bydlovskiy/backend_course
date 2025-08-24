@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { eq, count, or, ilike, desc, asc, sql } from 'drizzle-orm';
+import { eq, count, desc, asc, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 import { postsTable } from 'src/services/drizzle/schemas/schema';
@@ -55,12 +55,13 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
       const sortDirection = params?.sortDirection ?? 'desc';
       const minCommentsCount = params?.minCommentsCount;
 
-      let searchWhereClause = undefined;
+      const similarityThreshold = 0.2;
+      let searchWhereClause = undefined as unknown as ReturnType<typeof sql> | undefined;
       if (searchQuery) {
-        searchWhereClause = or(
-          ilike(postsTable.title, `%${searchQuery}%`),
-          ilike(postsTable.description, `%${searchQuery}%`)
-        );
+        searchWhereClause = sql`(
+          similarity(${postsTable.title}, ${searchQuery}) > ${similarityThreshold}
+          OR similarity(${postsTable.description}, ${searchQuery}) > ${similarityThreshold}
+        )`;
       }
       
       let commentsCountFilter = undefined;

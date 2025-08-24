@@ -8,6 +8,13 @@
       "when": 1754306854777,
       "tag": "0000_white_shocker",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1756035991827,
+      "tag": "0001_hot_tinkerer",
+      "breakpoints": true
     }
   ]
 }
