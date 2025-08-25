@@ -16,46 +16,12 @@ export function getProfileRepo(db: NodePgDatabase): IProfileRepo {
       return ProfileSchema.parse(rows[0]);
     },
 
-    async findById(id: string) {
-      const rows = await db
-        .select()
-        .from(profilesTable)
-        .where(eq(profilesTable.id, id))
-        .limit(1);
-      if (rows.length === 0) {return null;}
-      return ProfileSchema.parse(rows[0]);
-    },
-
     async findByCognitoSub(cognitoSub: string) {
       const rows = await db
         .select()
         .from(profilesTable)
         .where(eq(profilesTable.cognitoSub, cognitoSub))
         .limit(1);
-      if (rows.length === 0) {return null;}
-      return ProfileSchema.parse(rows[0]);
-    },
-
-    async findByEmail(email: string) {
-      const rows = await db
-        .select()
-        .from(profilesTable)
-        .where(eq(profilesTable.email, email))
-        .limit(1);
-      if (rows.length === 0) {return null;}
-      return ProfileSchema.parse(rows[0]);
-    },
-
-    async updateProfile(id: string, data) {
-      const rows = await db
-        .update(profilesTable)
-        .set({
-          email: data.email ?? undefined,
-          firstName: data.firstName ?? undefined,
-          lastName: data.lastName ?? undefined
-        })
-        .where(eq(profilesTable.id, id))
-        .returning();
       if (rows.length === 0) {return null;}
       return ProfileSchema.parse(rows[0]);
     }
