@@ -21,11 +21,10 @@ const routes: FastifyPluginAsync = async function (f) {
       }
     }
   }, async req => {
-    const post = await getPostById({
+    return await getPostById({
       postRepo: fastify.repos.postRepo,
       postId: req.params.postId
     });
-    return post;
   });
 
   fastify.patch('/', {
@@ -39,13 +38,12 @@ const routes: FastifyPluginAsync = async function (f) {
       body: UpdatePostByIdReqSchema
     }
   }, async req => {
-    const post = await updatePostById({
+    return await updatePostById({
       postRepo: fastify.repos.postRepo,
       postId: req.params.postId,
       data: req.body,
       currentUserId: req.profile?.id
     });
-    return post;
   });
 };
 

@@ -22,13 +22,13 @@ const routes: FastifyPluginAsync = async function (f) {
       body: UpdateCommentByIdReqSchema
     }
   }, async req => {
-    const comment = await updateCommentById({
+    return await updateCommentById({
       commentRepo: fastify.repos.commentRepo,
       commentId: req.params.commentId,
       data: req.body,
-      currentUserId: req.profile?.id
+      currentUserId: req.profile?.id,
+      isAdmin: true
     });
-    return comment;
   });
 };
 

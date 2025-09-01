@@ -2,13 +2,13 @@ import { IIdentityService } from 'src/types/IIdentityService';
 import { ERole } from 'src/types/profile/Role';
 import { IProfileRepo } from 'src/types/repos/IProfileRepo';
 
-export async function createUser(params: {
+export async function createAdmin(params: {
   identityService: IIdentityService,
   profileRepo: IProfileRepo,
   email: string,
-  password: string,
   firstName: string,
-  lastName: string
+  lastName: string,
+  password: string
 }) {
   const identityUser = await params.identityService.createUser(
     params.email,
@@ -16,15 +16,15 @@ export async function createUser(params: {
     params.lastName
   );
 
-  const user = await params.profileRepo.createProfile({
+  const admin = await params.profileRepo.createProfile({
     cognitoSub: identityUser.subId,
     email: params.email,
-    role: ERole.user,
+    role: ERole.admin,
     firstName: params.firstName,
     lastName: params.lastName
   });
 
   await params.identityService.setPassword(identityUser.subId, params.password);
 
-  return user;
+  return admin;
 }

@@ -22,7 +22,7 @@ const routes: FastifyPluginAsync = async function (f) {
       body: CreateCommentReqSchema
     }
   }, async req => {
-    const post = await createComment({
+    return await createComment({
       commentRepo: fastify.repos.commentRepo,
       data: {
         text: req.body.text
@@ -30,7 +30,6 @@ const routes: FastifyPluginAsync = async function (f) {
       postId: req.params.postId,
       authorId: req.profile!.id
     });
-    return post;
   });
 
   fastify.get('/', {
@@ -45,11 +44,10 @@ const routes: FastifyPluginAsync = async function (f) {
       }
     }
   }, async req => {
-    const result = await getCommentsByPostId({
+    return await getCommentsByPostId({
       commentRepo: fastify.repos.commentRepo,
       postId: req.params.postId
     });
-    return result;
   });
 };
 

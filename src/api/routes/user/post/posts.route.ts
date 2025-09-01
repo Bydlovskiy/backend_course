@@ -45,7 +45,7 @@ const routes: FastifyPluginAsync = async function (f) {
       })
     }
   }, async (req) => {
-    const result = await getAllPosts({
+    return await getAllPosts({
       postRepo: fastify.repos.postRepo,
       limit: req.query.limit,
       offset: req.query.offset,
@@ -54,8 +54,6 @@ const routes: FastifyPluginAsync = async function (f) {
       sortDirection: req.query.sortDirection,
       minCommentsCount: req.query.minCommentsCount
     });
-
-    return result;
   });
 };
 

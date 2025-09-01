@@ -73,6 +73,14 @@ export function getCommentRepo(db: NodePgDatabase): ICommentRepo {
         return null;
       }
       return await fetchCommentWithAuthor(updated[0].id);
+    },
+
+    async deleteCommentById(id: string) {
+      const res = await db
+        .delete(commentsTable)
+        .where(eq(commentsTable.id, id))
+        .returning({ id: commentsTable.id });
+      return res.length > 0;
     }
   };
 }

@@ -10,26 +10,29 @@ export function getAWSCognitoService(region: string): IIdentityService {
     region
   });
 
+  function mapAttributes(attributes?: AWS.AttributeType[] | undefined) {
+    const map = (attributes || []).reduce<Record<string, string>>((acc, a) => {
+      if (a.Name && a.Value !== undefined) {acc[a.Name] = a.Value;}
+      return acc;
+    }, {});
+    return map;
+  }
+
   return {
     async getUserBySubId(subId) {
       try {
         const user = await client.adminGetUser({
-          UserPoolId: process.env.COGNITO_USER_POOL_ID,
+          UserPoolId: process.env.COGNITO_USER_POOL_ID!,
           Username: subId
         });
 
-        const attributesMap = user.UserAttributes?.reduce<Record<string, string>>((map, attr) => {
-          if (attr.Name && attr.Value !== undefined) {
-            map[attr.Name] = attr.Value;
-          }
-          return map;
-        }, {}) || {};
+        const attributesMap = mapAttributes(user.UserAttributes);
 
         return IdentityUserSchema.parse({
           subId: user.Username!,
           email: attributesMap.email || '',
-          firstName: attributesMap.name || '',
-          lastName: attributesMap.family_name || '',
+          firstName: attributesMap.name || undefined,
+          lastName: attributesMap.family_name || undefined,
           emailVerified: attributesMap.email_verified === 'true',
           isEnabled: user.Enabled,
           mfaEnabled: !!user.UserMFASettingList
@@ -45,18 +48,39 @@ export function getAWSCognitoService(region: string): IIdentityService {
           AccessToken: token
         });
 
-        const rawUserData = user.UserAttributes?.
-        reduce<Record<string, string | null>>((acc, attribute) => {
-          if (attribute.Name) {
-            return { ...acc, [attribute.Name]: attribute.Value || null };
-          }
+        const rawUserData = mapAttributes(user.UserAttributes);
+        const subId = rawUserData.sub;
+        const email = rawUserData.email;
 
-          return acc;
-        }, {});
+        // Enrich with adminGetUser to know Enabled/first/last/mfa
+        let isEnabled: boolean | undefined;
+        let firstName: string | undefined;
+        let lastName: string | undefined;
+        let emailVerified: boolean | undefined;
+        let mfaEnabled: boolean | undefined;
+        try {
+          const adminUser = await client.adminGetUser({
+            UserPoolId: process.env.COGNITO_USER_POOL_ID!,
+            Username: subId!
+          });
+          const att = mapAttributes(adminUser.UserAttributes);
+          isEnabled = adminUser.Enabled;
+          firstName = att.name || undefined;
+          lastName = att.family_name || undefined;
+          emailVerified = att.email_verified === 'true';
+          mfaEnabled = !!adminUser.UserMFASettingList;
+        } catch (_) {
+          // ignore enrichment failures
+        }
 
         return IdentityUserSchema.parse({
-          subId: rawUserData!.sub,
-          email: rawUserData!.email
+          subId: subId!,
+          email: email!,
+          firstName,
+          lastName,
+          emailVerified,
+          isEnabled,
+          mfaEnabled
         });
       } catch (err) {
         throw new ApplicationError(`Cognito error - ${err}`);
@@ -73,7 +97,7 @@ export function getAWSCognitoService(region: string): IIdentityService {
             { Name: 'family_name', Value: lastName },
             { Name: 'email_verified', Value: 'true' }
           ],
-          UserPoolId: process.env.COGNITO_USER_POOL_ID,
+          UserPoolId: process.env.COGNITO_USER_POOL_ID!,
           MessageAction: 'SUPPRESS'
         });
 
@@ -81,7 +105,7 @@ export function getAWSCognitoService(region: string): IIdentityService {
         return { subId: att?.Value as string, email };
       } catch (err) {
         if (err instanceof AWS.UsernameExistsException) {
-          throw new HttpError(400, 'Cognito error', err, EErrorCodes.EMAIL_USED);
+          throw new HttpError(400, 'Cognito error', err as any, EErrorCodes.EMAIL_USED);
         }
 
         throw new ApplicationError(`Cognito error - ${err}`);
@@ -91,7 +115,7 @@ export function getAWSCognitoService(region: string): IIdentityService {
     async updateUser(subId, firstName, lastName) {
       try {
         await client.adminUpdateUserAttributes({
-          UserPoolId: process.env.COGNITO_USER_POOL_ID,
+          UserPoolId: process.env.COGNITO_USER_POOL_ID!,
           Username: subId,
           UserAttributes: [
             { Name: 'name', Value: firstName },
@@ -108,10 +132,63 @@ export function getAWSCognitoService(region: string): IIdentityService {
     async setPassword(subId, password) {
       try {
         await client.adminSetUserPassword({
-          UserPoolId: process.env.COGNITO_USER_POOL_ID,
+          UserPoolId: process.env.COGNITO_USER_POOL_ID!,
           Username: subId,
           Password: password,
           Permanent: true
+        });
+      } catch (err) {
+        throw new ApplicationError(`Cognito error - ${err}`);
+      }
+    },
+
+    async listUsers(params) {
+      try {
+        const res = await client.listUsers({
+          UserPoolId: process.env.COGNITO_USER_POOL_ID!,
+          Filter: params?.searchQuery ? `name ^= "${params.searchQuery}"` : undefined
+        });
+
+        console.log(res);
+
+        const users = (res.Users || []).map(u => {
+          const att = mapAttributes(u.Attributes);
+          return IdentityUserSchema.parse({
+            subId: att.sub || u.Username!,
+            email: att.email || '',
+            firstName: att.name || undefined,
+            lastName: att.family_name || undefined,
+            emailVerified: att.email_verified === 'true',
+            isEnabled: u.Enabled,
+            mfaEnabled: !!u.MFAOptions
+          });
+        });
+
+        return {
+          users,
+          paginationToken: res.PaginationToken
+        };
+      } catch (err) {
+        throw new ApplicationError(`Cognito error - ${err}`);
+      }
+    },
+
+    async deactivateUser(subId: string) {
+      try {
+        await client.adminDisableUser({
+          UserPoolId: process.env.COGNITO_USER_POOL_ID!,
+          Username: subId
+        });
+      } catch (err) {
+        throw new ApplicationError(`Cognito error - ${err}`);
+      }
+    },
+
+    async activateUser(subId: string) {
+      try {
+        await client.adminEnableUser({
+          UserPoolId: process.env.COGNITO_USER_POOL_ID!,
+          Username: subId
         });
       } catch (err) {
         throw new ApplicationError(`Cognito error - ${err}`);
@@ -121,5 +198,5 @@ export function getAWSCognitoService(region: string): IIdentityService {
 }
 
 export const identityService = getAWSCognitoService(
-  process.env.COGNITO_REGION
+  process.env.COGNITO_REGION as string
 );

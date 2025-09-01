@@ -7,6 +7,7 @@ export const profilesTable = pgTable('profiles', {
   email: varchar({ length: 255 }).notNull().unique(),
   firstName: varchar({ length: 255 }).notNull(),
   lastName: varchar({ length: 255 }).notNull(),
+  role: varchar({ length: 64 }),
   createdAt: timestamp().defaultNow(),
   updatedAt: timestamp().defaultNow().$onUpdate(() => new Date())
 });

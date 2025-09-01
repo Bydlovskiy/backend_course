@@ -1,6 +1,7 @@
 export enum EErrorCodes {
   GENERAL_ERROR = 1000,
-  EMAIL_USED = 1001
+  EMAIL_USED = 1001,
+  USER_DISABLED = 1002
 }
 
 export function getErrorCodesDescription() {

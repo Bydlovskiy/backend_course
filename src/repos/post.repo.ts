@@ -61,7 +61,7 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
       return await fetchPostWithAuthor(id);
     },
 
-    async getAllPosts(params: { 
+    async getAllPosts(params?: { 
       limit?: number; 
       offset?: number; 
       searchQuery?: string;
@@ -166,6 +166,7 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
               email: z.string().email(),
               firstName: z.string(),
               lastName: z.string(),
+              role: z.enum(['user', 'admin']),
               createdAt: z.date(),
               updatedAt: z.date()
             })
