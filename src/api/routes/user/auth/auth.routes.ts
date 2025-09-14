@@ -1,8 +1,9 @@
 import { FastifyPluginAsync } from 'fastify';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { createUser } from 'src/controllers/auth/create-user';
 import { GetProfileResSchema } from 'src/api/routes/schemas/profile/GetProfileResSchema';
+import { createAccount } from 'src/controllers/auth/create-account';
+import { ERole } from 'src/types/profile/Role';
 
 const routes: FastifyPluginAsync = async function (f) {
   const fastify = f.withTypeProvider<ZodTypeProvider>();
@@ -29,13 +30,14 @@ const routes: FastifyPluginAsync = async function (f) {
     }
   }, async (req) => {
     const { email, password, firstName, lastName } = req.body; 
-    const result = await createUser({
+    const result = await createAccount({
       identityService: (fastify as any).identityService,
       profileRepo: (fastify as any).repos.profileRepo,
       email,
       password,
       firstName,
-      lastName
+      lastName,
+      role: ERole.user
     });
     
     return result;

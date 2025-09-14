@@ -2,29 +2,29 @@ import { IIdentityService } from 'src/types/IIdentityService';
 import { ERole } from 'src/types/profile/Role';
 import { IProfileRepo } from 'src/types/repos/IProfileRepo';
 
-export async function createAdmin(params: {
+export async function createAccount(params: {
   identityService: IIdentityService,
   profileRepo: IProfileRepo,
   email: string,
   firstName: string,
   lastName: string,
-  password: string
+  password: string,
+  role: ERole
 }) {
-  const identityUser = await params.identityService.createUser(
+  await params.identityService.createUser(
     params.email,
     params.firstName,
     params.lastName
   );
 
-  const admin = await params.profileRepo.createProfile({
-    cognitoSub: identityUser.subId,
+  const account = await params.profileRepo.createProfile({
     email: params.email,
-    role: ERole.admin,
+    role: params.role,
     firstName: params.firstName,
     lastName: params.lastName
   });
 
-  await params.identityService.setPassword(identityUser.subId, params.password);
+  await params.identityService.setPassword(params.email, params.password);
 
-  return admin;
+  return account;
 }

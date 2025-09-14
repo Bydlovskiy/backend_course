@@ -8,7 +8,6 @@ export const GetPostByIdRespSchema = z.object({
   authorId: z.string(),
   author: z.object({
     id: z.string(),
-    cognitoSub: z.string(),
     email: z.string().email(),
     firstName: z.string(),
     lastName: z.string(),

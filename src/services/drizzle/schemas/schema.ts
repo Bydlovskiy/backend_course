@@ -3,7 +3,6 @@ import { sql } from 'drizzle-orm';
 
 export const profilesTable = pgTable('profiles', {
   id: uuid().primaryKey().default(sql`uuid_generate_v4()`),
-  cognitoSub: varchar({ length: 64 }).notNull().unique(),
   email: varchar({ length: 255 }).notNull().unique(),
   firstName: varchar({ length: 255 }).notNull(),
   lastName: varchar({ length: 255 }).notNull(),

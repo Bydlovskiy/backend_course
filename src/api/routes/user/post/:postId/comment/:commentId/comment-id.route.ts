@@ -22,6 +22,10 @@ const routes: FastifyPluginAsync = async function (f) {
       body: UpdateCommentByIdReqSchema
     }
   }, async req => {
+    // if (req.profile?.id !== req.body.authorId) {
+    //   throw new HttpError(403, 'Forbidden: only the author can update this comment');
+    // }
+
     return await updateCommentById({
       commentRepo: fastify.repos.commentRepo,
       commentId: req.params.commentId,

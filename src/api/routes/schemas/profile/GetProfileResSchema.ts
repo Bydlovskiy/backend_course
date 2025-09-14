@@ -2,7 +2,6 @@ import { z } from 'zod';
 
 export const GetProfileResSchema = z.object({
   id: z.string(),
-  cognitoSub: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),
   role: z.enum(['user', 'admin']),

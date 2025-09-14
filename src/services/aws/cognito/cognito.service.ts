@@ -19,17 +19,16 @@ export function getAWSCognitoService(region: string): IIdentityService {
   }
 
   return {
-    async getUserBySubId(subId) {
+    async getUserByEmail(email: string) {
       try {
         const user = await client.adminGetUser({
           UserPoolId: process.env.COGNITO_USER_POOL_ID!,
-          Username: subId
+          Username: email
         });
 
         const attributesMap = mapAttributes(user.UserAttributes);
 
         return IdentityUserSchema.parse({
-          subId: user.Username!,
           email: attributesMap.email || '',
           firstName: attributesMap.name || undefined,
           lastName: attributesMap.family_name || undefined,
@@ -74,7 +73,6 @@ export function getAWSCognitoService(region: string): IIdentityService {
         }
 
         return IdentityUserSchema.parse({
-          subId: subId!,
           email: email!,
           firstName,
           lastName,
@@ -129,11 +127,11 @@ export function getAWSCognitoService(region: string): IIdentityService {
       }
     },
 
-    async setPassword(subId, password) {
+    async setPassword(email, password) {
       try {
         await client.adminSetUserPassword({
           UserPoolId: process.env.COGNITO_USER_POOL_ID!,
-          Username: subId,
+          Username: email,
           Password: password,
           Permanent: true
         });
@@ -149,21 +147,22 @@ export function getAWSCognitoService(region: string): IIdentityService {
           Filter: params?.searchQuery ? `name ^= "${params.searchQuery}"` : undefined
         });
 
-        console.log(res);
-
         const users = (res.Users || []).map(u => {
           const att = mapAttributes(u.Attributes);
           return IdentityUserSchema.parse({
-            subId: att.sub || u.Username!,
             email: att.email || '',
             firstName: att.name || undefined,
             lastName: att.family_name || undefined,
             emailVerified: att.email_verified === 'true',
             isEnabled: u.Enabled,
-            mfaEnabled: !!u.MFAOptions
+            mfaEnabled: !!u.MFAOptions,
+            status: u.UserStatus
           });
         });
 
+        console.log('-----------------');
+        console.log(users);
+        console.log('-----------------');
         return {
           users,
           paginationToken: res.PaginationToken
@@ -173,22 +172,22 @@ export function getAWSCognitoService(region: string): IIdentityService {
       }
     },
 
-    async deactivateUser(subId: string) {
+    async deactivateUser(email: string) {
       try {
         await client.adminDisableUser({
           UserPoolId: process.env.COGNITO_USER_POOL_ID!,
-          Username: subId
+          Username: email
         });
       } catch (err) {
         throw new ApplicationError(`Cognito error - ${err}`);
       }
     },
 
-    async activateUser(subId: string) {
+    async activateUser(email: string) {
       try {
         await client.adminEnableUser({
           UserPoolId: process.env.COGNITO_USER_POOL_ID!,
-          Username: subId
+          Username: email
         });
       } catch (err) {
         throw new ApplicationError(`Cognito error - ${err}`);

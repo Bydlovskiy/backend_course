@@ -17,8 +17,7 @@ export async function updateCommentById(params: {
   if (!existing) {
     throw new HttpError(404, 'Comment not found');
   }
-  console.log('--------------0---------------');
-  console.log(params.isAdmin);  
+
   if (!params.isAdmin && existing.authorId !== params.currentUserId) {
     throw new HttpError(403, 'Forbidden: only the author can update this comment');
   }

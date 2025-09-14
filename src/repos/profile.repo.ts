@@ -8,7 +8,6 @@ export function getProfileRepo(db: NodePgDatabase): IProfileRepo {
   return {
     async createProfile(data) {
       const rows = await db.insert(profilesTable).values({
-        cognitoSub: data.cognitoSub,
         email: data.email,
         firstName: data.firstName,
         lastName: data.lastName,
@@ -17,11 +16,11 @@ export function getProfileRepo(db: NodePgDatabase): IProfileRepo {
       return ProfileSchema.parse(rows[0]);
     },
 
-    async findByCognitoSub(cognitoSub: string) {
+    async findByEmail(email: string) {
       const rows = await db
         .select()
         .from(profilesTable)
-        .where(eq(profilesTable.cognitoSub, cognitoSub))
+        .where(eq(profilesTable.email, email))
         .limit(1);
       if (rows.length === 0) {return null;}
       return ProfileSchema.parse(rows[0]);
@@ -64,6 +63,15 @@ export function getProfileRepo(db: NodePgDatabase): IProfileRepo {
         users,
         meta: { total, limit, offset, page, totalPages }
       };
+    },
+
+    async updateNamesByEmail(data) {
+      const rows = await db
+        .update(profilesTable)
+        .set({ firstName: data.firstName, lastName: data.lastName })
+        .where(eq(profilesTable.email, data.email))
+        .returning();
+      return ProfileSchema.parse(rows[0]);
     }
   };
 }

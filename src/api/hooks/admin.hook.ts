@@ -7,11 +7,8 @@ export const adminHook: preHandlerAsyncHookHandler = async function (request) {
   }
 
   const profile = request.profile;
-  if (!profile) {
-    throw new HttpError(401, 'Unauthorized');
-  }
 
-  if (profile.role !== 'admin') {
+  if (profile && profile.role !== 'admin') {
     throw new HttpError(403, 'Forbidden: admin role required');
   }
 };

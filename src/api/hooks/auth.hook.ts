@@ -29,7 +29,7 @@ export const authHook: preHandlerAsyncHookHandler = async function (request) {
       throw new HttpError(403, 'User is disabled', undefined, EErrorCodes.USER_DISABLED);
     }
 
-    const profile = await this.repos.profileRepo.findByCognitoSub(identityUser.subId);
+    const profile = await this.repos.profileRepo.findByEmail(identityUser.email);
     if (!profile) {
       throw new Error('No profile');
     }

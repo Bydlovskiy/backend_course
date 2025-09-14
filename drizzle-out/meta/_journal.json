@@ -15,6 +15,13 @@
       "when": 1756746444537,
       "tag": "0001_confused_felicia_hardy",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1757846082479,
+      "tag": "0002_superb_goblin_queen",
+      "breakpoints": true
     }
   ]
 }

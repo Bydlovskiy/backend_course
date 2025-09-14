@@ -16,7 +16,15 @@ export const EnvSchema = z.object({
   SWAGGER_PWD: z.string().min(10),
   COGNITO_REGION: z.string(),
   COGNITO_USER_POOL_ID: z.string(),
-  COGNITO_CLIENT_ID: z.string()
+  COGNITO_CLIENT_ID: z.string(),
+  // Optional integrations
+  SENDGRID_API_KEY: z.string(),
+  SENDGRID_FROM_EMAIL: z.string().email(),
+  SENDGRID_TEMPLATE_INVITE_ID: z.string(),
+  INVITE_SECRET: z.string().optional(),
+  FRONTEND_URL: z.string().url(),
+  RESEND_API_KEY: z.string(),
+  RESEND_FROM_EMAIL: z.string().email()
 });
 
 export type Env = z.infer<typeof EnvSchema>;
