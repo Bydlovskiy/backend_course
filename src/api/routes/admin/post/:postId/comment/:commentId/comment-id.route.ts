@@ -25,9 +25,7 @@ const routes: FastifyPluginAsync = async function (f) {
     return await updateCommentById({
       commentRepo: fastify.repos.commentRepo,
       commentId: req.params.commentId,
-      data: req.body,
-      currentUserId: req.profile?.id,
-      isAdmin: true
+      data: req.body
     });
   });
 };

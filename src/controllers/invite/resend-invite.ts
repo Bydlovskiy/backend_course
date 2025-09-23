@@ -1,8 +1,9 @@
 import { generateSignature } from 'src/services/kms/kms.service';
 import { sendEmail } from 'src/services/sendgrid/sendGrid.service';
+import { sendEmailResend } from 'src/services/resend/resend.service';
+
 import { IProfileRepo } from 'src/types/repos/IProfileRepo';
 import { HttpError } from 'src/api/errors/HttpError';
-import { sendEmailResend } from 'src/services/resend/resend.service';
 
 export async function resendInvite(params: {
   userRepo: IProfileRepo;
@@ -11,7 +12,6 @@ export async function resendInvite(params: {
 }) {
   const { userRepo, email, sender } = params;
 
-  // Get role from existing profile to pass into template
   const profile = await userRepo.findByEmail(email);
   if (!profile) {
     throw new HttpError(404, 'Profile not found for provided email');
@@ -22,7 +22,6 @@ export async function resendInvite(params: {
 
   const inviteUrl = `${process.env.FRONTEND_URL}/accept-invite?email=${encodeURIComponent(email)}&expireAt=${expireAt}&signature=${encodeURIComponent(signature)}`;
 
-  console.log(sender);
   if (sender === 'sendGrid') {
     await sendEmail(email, inviteUrl);
   } else if (sender === 'resend') {

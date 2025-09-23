@@ -8,6 +8,8 @@ import { UpdatePostByIdReqSchema } from 'src/api/routes/schemas/post/UpdatePostB
 import { getPostById } from 'src/controllers/post/get-post-by-id';
 import { updatePostById } from 'src/controllers/post/update-post-by-id';
 
+import { postOwnerHook } from 'src/api/hooks/post-owner.hook';
+
 const routes: FastifyPluginAsync = async function (f) {
   const fastify = f.withTypeProvider<ZodTypeProvider>();
 
@@ -28,6 +30,7 @@ const routes: FastifyPluginAsync = async function (f) {
   });
 
   fastify.patch('/', {
+    preHandler: postOwnerHook,
     schema: {
       params: z.object({
         postId: z.string().uuid()
@@ -41,8 +44,7 @@ const routes: FastifyPluginAsync = async function (f) {
     return await updatePostById({
       postRepo: fastify.repos.postRepo,
       postId: req.params.postId,
-      data: req.body,
-      currentUserId: req.profile?.id
+      data: req.body
     });
   });
 };

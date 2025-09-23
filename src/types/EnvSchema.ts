@@ -18,6 +18,8 @@ export const EnvSchema = z.object({
   COGNITO_USER_POOL_ID: z.string(),
   COGNITO_CLIENT_ID: z.string(),
   // Optional integrations
+  KMS_KEY_ID: z.string(),
+  AWS_REGION: z.string(),
   SENDGRID_API_KEY: z.string(),
   SENDGRID_FROM_EMAIL: z.string().email(),
   SENDGRID_TEMPLATE_INVITE_ID: z.string(),

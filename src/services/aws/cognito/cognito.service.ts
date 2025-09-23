@@ -160,9 +160,6 @@ export function getAWSCognitoService(region: string): IIdentityService {
           });
         });
 
-        console.log('-----------------');
-        console.log(users);
-        console.log('-----------------');
         return {
           users,
           paginationToken: res.PaginationToken

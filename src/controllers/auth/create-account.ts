@@ -2,6 +2,8 @@ import { IIdentityService } from 'src/types/IIdentityService';
 import { ERole } from 'src/types/profile/Role';
 import { IProfileRepo } from 'src/types/repos/IProfileRepo';
 
+import { registerAccount } from 'src/controllers/common/register-account';
+
 export async function createAccount(params: {
   identityService: IIdentityService,
   profileRepo: IProfileRepo,
@@ -11,17 +13,14 @@ export async function createAccount(params: {
   password: string,
   role: ERole
 }) {
-  await params.identityService.createUser(
-    params.email,
-    params.firstName,
-    params.lastName
-  );
-
-  const account = await params.profileRepo.createProfile({
+  const account = await registerAccount({
+    identityService: params.identityService,
+    userRepo: params.profileRepo,
     email: params.email,
     role: params.role,
     firstName: params.firstName,
-    lastName: params.lastName
+    lastName: params.lastName,
+    activatedAt: new Date()
   });
 
   await params.identityService.setPassword(params.email, params.password);

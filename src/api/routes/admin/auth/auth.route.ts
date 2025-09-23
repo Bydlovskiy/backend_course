@@ -22,20 +22,20 @@ const routes: FastifyPluginAsync = async function (f) {
           password: z.string().min(6),
           firstName: z.string(),
           lastName: z.string(),
-          role: z.enum(['admin', 'user'])
+          role: z.enum([ERole.admin, ERole.user])
         }),
         response: { 200: GetProfileResSchema }
       }
     }, async (req) => {
       const { email, password, firstName, lastName, role } = req.body;
       const result = await createAccount({
-        identityService: (fastify as any).identityService,
-        profileRepo: (fastify as any).repos.profileRepo,
+        identityService: fastify.identityService,
+        profileRepo: fastify.repos.profileRepo,
         email,
         password,
         firstName,
         lastName,
-        role: role as ERole
+        role
       });
       return result;
     });

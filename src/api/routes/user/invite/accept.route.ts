@@ -1,7 +1,7 @@
 import { FastifyPluginAsync } from 'fastify';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { acceptInvite } from 'src/controllers/invite/accept-invite';
+import { acceptInvite } from 'src/controllers/invite/activate-account';
 import { AcceptInviteReqSchema } from 'src/api/routes/schemas/invite/AcceptInviteReqSchema';
 
 const routes: FastifyPluginAsync = async function (f) {
@@ -25,7 +25,9 @@ const routes: FastifyPluginAsync = async function (f) {
     }
   }, async (req) => {
     const { email, signature, firstName, lastName, expireAt, password } = req.body;
+
     await acceptInvite({
+      identityService: fastify.identityService,
       userRepo: fastify.repos.profileRepo,
       email,
       signature,
@@ -34,6 +36,7 @@ const routes: FastifyPluginAsync = async function (f) {
       expireAt,
       password
     });
+
     return { success: true };
   });
 };

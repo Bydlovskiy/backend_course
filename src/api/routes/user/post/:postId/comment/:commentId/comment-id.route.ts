@@ -7,10 +7,13 @@ import { UpdateCommentByIdReqSchema } from 'src/api/routes/schemas/comment/Updat
 
 import { updateCommentById } from 'src/controllers/comment/update-comment-by-id';
 
+import { commentOwnerHook } from 'src/api/hooks/comment-owner.hook';
+
 const routes: FastifyPluginAsync = async function (f) {
   const fastify = f.withTypeProvider<ZodTypeProvider>();
 
   fastify.patch('/', {
+    preHandler: commentOwnerHook,
     schema: {
       params: z.object({
         postId: z.string().uuid(),
@@ -22,16 +25,10 @@ const routes: FastifyPluginAsync = async function (f) {
       body: UpdateCommentByIdReqSchema
     }
   }, async req => {
-    // if (req.profile?.id !== req.body.authorId) {
-    //   throw new HttpError(403, 'Forbidden: only the author can update this comment');
-    // }
-
     return await updateCommentById({
       commentRepo: fastify.repos.commentRepo,
       commentId: req.params.commentId,
-      data: req.body,
-      currentUserId: req.profile?.id,
-      isAdmin: false
+      data: req.body
     });
   });
 };

@@ -1,9 +1,11 @@
 import { generateSignature } from 'src/services/kms/kms.service';
 import { sendEmail } from 'src/services/sendgrid/sendGrid.service';
-import { identityService } from 'src/services/aws/cognito/cognito.service';
+import { sendEmailResend } from 'src/services/resend/resend.service';
+
 import { IProfileRepo } from 'src/types/repos/IProfileRepo';
 import { ERole } from 'src/types/profile/Role';
-import { sendEmailResend } from 'src/services/resend/resend.service';
+
+import { HttpError } from 'src/api/errors/HttpError';
 
 export async function sendInvite(params: {
   userRepo: IProfileRepo;
@@ -11,7 +13,13 @@ export async function sendInvite(params: {
   role: ERole;
   sender: 'sendGrid' | 'resend';
 }) {
-  const { userRepo, email, role, sender } = params;
+  const { userRepo, email, sender } = params;
+
+  const existing = await userRepo.findByEmail(email);
+
+  if (existing) {
+    throw new HttpError(400, 'User already exists');
+  }
 
   const expireAt = Date.now() + 1000 * 60 * 60 * 24;
   const signature = await generateSignature(email, expireAt);
@@ -23,15 +31,6 @@ export async function sendInvite(params: {
   } else if (sender === 'resend') {
     await sendEmailResend(email, inviteUrl);
   }
-
-  await identityService.createUser(email, '', '');
-
-  await userRepo.createProfile({
-    email,
-    role,
-    firstName: '',
-    lastName: ''
-  });
 
   return { success: true };
 }

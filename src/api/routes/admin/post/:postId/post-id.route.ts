@@ -41,9 +41,7 @@ const adminPostsRoutes: FastifyPluginAsync = async function (f) {
     return await updatePostById({
       postRepo: fastify.repos.postRepo,
       postId: req.params.postId,
-      data: req.body,
-      currentUserId: req.profile?.id,
-      isAdmin: true
+      data: req.body
     });
   });
 };

@@ -6,7 +6,8 @@ export interface IProfileRepo {
     { email: string;
       role: ERole;
       firstName: string;
-      lastName: string }): Promise<Profile>;
+      lastName: string;
+      activatedAt?: Date | null }): Promise<Profile>;
   findByEmail(email: string): Promise<Profile | null>;
   listProfiles(params?: {
     limit?: number;
@@ -16,7 +17,7 @@ export interface IProfileRepo {
     users: Profile[];
     meta: { total: number; limit: number; offset: number; page: number; totalPages: number };
   }>;
-  updateNamesByEmail(
-    data: { email: string; firstName: string; lastName: string }
+  updateProfileByEmail(
+    data: { email: string; firstName: string; lastName: string, activatedAt?: Date }
   ): Promise<Profile>;
 }

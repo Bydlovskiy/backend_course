@@ -1,5 +1,6 @@
-import { ICommentRepo } from 'src/types/repos/ICommentRepo';
 import { CreateCommentInput } from 'src/api/routes/schemas/comment/CreateCommentReqSchema';
+
+import { ICommentRepo } from 'src/types/repos/ICommentRepo';
 import { HttpError } from 'src/api/errors/HttpError';  
 
 export async function createComment(params: {

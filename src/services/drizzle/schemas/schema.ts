@@ -8,7 +8,8 @@ export const profilesTable = pgTable('profiles', {
   lastName: varchar({ length: 255 }).notNull(),
   role: varchar({ length: 64 }),
   createdAt: timestamp().defaultNow(),
-  updatedAt: timestamp().defaultNow().$onUpdate(() => new Date())
+  updatedAt: timestamp().defaultNow().$onUpdate(() => new Date()),
+  activatedAt: timestamp()
 });
 
 export const postsTable = pgTable('posts', {

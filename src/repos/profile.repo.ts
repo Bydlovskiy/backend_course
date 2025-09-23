@@ -11,7 +11,8 @@ export function getProfileRepo(db: NodePgDatabase): IProfileRepo {
         email: data.email,
         firstName: data.firstName,
         lastName: data.lastName,
-        role: data.role
+        role: data.role,
+        activatedAt: data.activatedAt
       }).returning();
       return ProfileSchema.parse(rows[0]);
     },
@@ -65,10 +66,10 @@ export function getProfileRepo(db: NodePgDatabase): IProfileRepo {
       };
     },
 
-    async updateNamesByEmail(data) {
+    async updateProfileByEmail(data) {
       const rows = await db
         .update(profilesTable)
-        .set({ firstName: data.firstName, lastName: data.lastName })
+        .set({ firstName: data.firstName, lastName: data.lastName, activatedAt: data.activatedAt })
         .where(eq(profilesTable.email, data.email))
         .returning();
       return ProfileSchema.parse(rows[0]);

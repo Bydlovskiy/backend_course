@@ -1,10 +1,11 @@
 import { FastifyPluginAsync } from 'fastify';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
+
 import { sendInvite } from 'src/controllers/invite/send-invite';
-// import { acceptInvite } from 'src/controllers/invite/accept-invite';
-// import { AcceptInviteReqSchema } from '../../schemas/invite/AcceptInviteReqSchema';
 import { resendInvite } from 'src/controllers/invite/resend-invite';
+import { registerAccount } from 'src/controllers/common/register-account';
+
 import { adminHook } from 'src/api/hooks/admin.hook';
 import { ERole } from 'src/types/profile/Role';
 
@@ -32,6 +33,17 @@ const routes: FastifyPluginAsync = async function (f) {
         role: role as ERole,
         sender: sender as 'sendGrid' | 'resend'
       });
+
+      await registerAccount({
+        identityService: fastify.identityService,
+        userRepo: fastify.repos.profileRepo,
+        email,
+        role: role as ERole,
+        firstName: '',
+        lastName: '',
+        activatedAt: null
+      });
+
       return sent;
     });
 
