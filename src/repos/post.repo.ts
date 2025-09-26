@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { eq, count, desc, asc, sql } from 'drizzle-orm';
+import { eq, count, desc, asc, sql, inArray, and } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
@@ -29,15 +29,12 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
         commentAuthor,
         tagId: tagsTable.id,
         tagName: tagsTable.name,
-        tags: sql/* json */`
+        tags: sql`
         COALESCE(
-          (
-            SELECT json_agg(json_build_object('id', t.id, 'name', t.name))
-            FROM ${postTagsTable} pt
-            JOIN ${tagsTable} t ON t.id = pt.tag_id
-            WHERE pt.post_id = ${postsTable.id}
-          ),
-          '[]'::json
+          JSON_AGG(
+            JSON_BUILD_OBJECT('id', ${tagsTable.id}, 'name', ${tagsTable.name})
+          ) FILTER (WHERE ${tagsTable.id} IS NOT NULL),
+          '[]'
         )
       `.as('tags')
       })
@@ -47,6 +44,12 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
       .leftJoin(commentAuthor, eq(commentsTable.authorId, commentAuthor.id))
       .leftJoin(postTagsTable, eq(postsTable.id, postTagsTable.postId))
       .leftJoin(tagsTable, eq(postTagsTable.tagId, tagsTable.id))
+      .groupBy(postsTable.id,
+        postAuthor.id,
+        commentsTable.id,
+        commentAuthor.id,
+        tagsTable.id,
+        tagsTable.name)
       .where(eq(postsTable.id, id));
 
     if (results.length === 0) {
@@ -54,6 +57,7 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
     }
 
     const base = results[0];
+
     const comments = results
       .filter(r => r.comment)
       .map(r => ({
@@ -62,7 +66,10 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
       }));
 
     return {
-      ...PostSchema.parse(base.post),
+      ...PostSchema.parse({
+        ...base.post,
+        tags: base.tags
+      }),
       author: base.postAuthor,
       comments
     } as any;
@@ -85,6 +92,7 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
       sortBy?: SortField;
       sortDirection?: SortDirection;
       minCommentsCount?: number;
+      tagIds?: string[];
     }) {
       if (params?.limit && params.limit > 100) {
         throw new HttpError(1001, 'Limit cannot exceed 100');
@@ -96,6 +104,7 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
       const sortBy = params?.sortBy ?? 'createdAt';
       const sortDirection = params?.sortDirection ?? 'desc';
       const minCommentsCount = params?.minCommentsCount;
+      const tagIds = params?.tagIds || [];
 
       const similarityThreshold = 0.3;
       let searchWhereClause = undefined as unknown as ReturnType<typeof sql> | undefined;
@@ -110,7 +119,21 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
       if (minCommentsCount !== undefined && minCommentsCount > 0) {
         commentsCountFilter = sql`"comments_count" >= ${minCommentsCount}`;
       }
-      
+
+      // Build tag filter: posts that have AT LEAST ONE of the provided tagIds (ANY-match)
+      const tagFilterWhere = tagIds.length > 0
+        ? sql`${postsTable.id} IN (
+            SELECT ${postTagsTable.postId}
+            FROM ${postTagsTable}
+            WHERE ${inArray(postTagsTable.tagId, tagIds)}
+          )`
+        : undefined;
+
+      // Combine search and tag filters
+      const combinedWhere = searchWhereClause && tagFilterWhere
+        ? and(searchWhereClause, tagFilterWhere)
+        : (searchWhereClause || tagFilterWhere);
+
       const postsWithCommentCounts = db
         .select({
           id: postsTable.id,
@@ -119,11 +142,21 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
           authorId: postsTable.authorId,
           createdAt: postsTable.createdAt,
           updatedAt: postsTable.updatedAt,
+          tags: sql`
+              COALESCE(
+                JSON_AGG(
+                  JSON_BUILD_OBJECT('id', ${tagsTable.id}, 'name', ${tagsTable.name})
+                ) FILTER (WHERE ${tagsTable.id} IS NOT NULL),
+                '[]'
+              )
+            `.as('tags'),
           commentsCount: count(commentsTable.id).as('comments_count')
         })
         .from(postsTable)
         .leftJoin(commentsTable, eq(postsTable.id, commentsTable.postId))
-        .where(searchWhereClause)
+        .leftJoin(postTagsTable, eq(postsTable.id, postTagsTable.postId))
+        .leftJoin(tagsTable, eq(postTagsTable.tagId, tagsTable.id))
+        .where(combinedWhere)
         .groupBy(postsTable.id)
         .as('posts_with_comments');
       
@@ -136,7 +169,8 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
           createdAt: postsWithCommentCounts.createdAt,
           updatedAt: postsWithCommentCounts.updatedAt,
           commentsCount: postsWithCommentCounts.commentsCount,
-          author: profilesTable
+          author: profilesTable,
+          tags: postsWithCommentCounts.tags
         })
         .from(postsWithCommentCounts)
         .innerJoin(profilesTable, eq(postsWithCommentCounts.authorId, profilesTable.id));
@@ -159,7 +193,7 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
       }
       
       const posts = await query.limit(limit).offset(offset);
-
+      
       const totalCountQuery = db
         .select({ count: sql`count(*)` })
         .from(postsWithCommentCounts);

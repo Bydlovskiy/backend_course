@@ -41,10 +41,15 @@ const adminPostsRoutes: FastifyPluginAsync = async function (f) {
           searchQuery: z.string().optional(),
           sortBy: z.enum(['title', 'createdAt', 'commentsCount']).optional(),
           sortDirection: z.enum(['asc', 'desc']).optional(),
-          minCommentsCount: z.coerce.number().int().min(0).optional()
+          minCommentsCount: z.coerce.number().int().min(0).optional(),
+          'tagIds[]': z.union([z.string(), z.array(z.string())]).optional()
         })
       }
     }, async (req) => {
+      const rawTagIds = (req.query as any)['tagIds[]'];
+      const tagIds = Array.isArray(rawTagIds)
+        ? rawTagIds
+        : (typeof rawTagIds === 'string' ? [rawTagIds] : undefined);
       return await getAllPosts({
         postRepo: fastify.repos.postRepo,
         limit: req.query.limit,
@@ -52,7 +57,8 @@ const adminPostsRoutes: FastifyPluginAsync = async function (f) {
         searchQuery: req.query.searchQuery,
         sortBy: req.query.sortBy,
         sortDirection: req.query.sortDirection,
-        minCommentsCount: req.query.minCommentsCount
+        minCommentsCount: req.query.minCommentsCount,
+        tagIds
       });
     });
   });
