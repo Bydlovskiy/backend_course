@@ -25,6 +25,7 @@ const adminPostsRoutes: FastifyPluginAsync = async function (f) {
     }, async (req) => {
       const post = await createPost({
         postRepo: fastify.repos.postRepo,
+        tagRepo: fastify.repos.tagRepo,
         data: { ...req.body, authorId: req.profile!.id }
       });
       return post;

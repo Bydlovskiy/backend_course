@@ -1,4 +1,4 @@
-import { uuid, pgTable, varchar, timestamp, text, index } from 'drizzle-orm/pg-core';
+import { uuid, pgTable, varchar, timestamp, text, index, primaryKey } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
 export const profilesTable = pgTable('profiles', {
@@ -33,3 +33,19 @@ export const commentsTable = pgTable('comments', {
   updatedAt: timestamp().defaultNow().$onUpdate(() => new Date())
 });
 
+// Tags: many-to-many with posts via post_tags
+export const tagsTable = pgTable('tags', {
+  id: uuid().primaryKey().default(sql`uuid_generate_v4()`),
+  name: varchar({ length: 64 }).notNull().unique(),
+  createdAt: timestamp().defaultNow(),
+  updatedAt: timestamp().defaultNow().$onUpdate(() => new Date())
+});
+
+export const postTagsTable = pgTable('post_tags', {
+  postId: uuid().notNull().references(() => postsTable.id, { onDelete: 'cascade' }),
+  tagId: uuid().notNull().references(() => tagsTable.id, { onDelete: 'cascade' })
+}, (t) => [
+  primaryKey({ columns: [t.postId, t.tagId], name: 'post_tags_pk' }),
+  index('post_tags_post_idx').on(t.postId),
+  index('post_tags_tag_idx').on(t.tagId)
+]);

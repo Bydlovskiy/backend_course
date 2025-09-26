@@ -40,6 +40,7 @@ const adminPostsRoutes: FastifyPluginAsync = async function (f) {
   }, async req => {
     return await updatePostById({
       postRepo: fastify.repos.postRepo,
+      tagRepo: fastify.repos.tagRepo,
       postId: req.params.postId,
       data: req.body
     });

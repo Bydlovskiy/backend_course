@@ -4,6 +4,8 @@ import { alias } from 'drizzle-orm/pg-core';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 import { postsTable } from 'src/services/drizzle/schemas/schema';
+import { postTagsTable } from 'src/services/drizzle/schemas/schema';
+import { tagsTable } from 'src/services/drizzle/schemas/schema';
 import { commentsTable } from 'src/services/drizzle/schemas/schema';
 import { profilesTable } from 'src/services/drizzle/schemas/schema';
 import { IPostRepo, SortDirection, SortField } from 'src/types/repos/IPostRepo';
@@ -24,12 +26,27 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
         post: postsTable,
         postAuthor,
         comment: commentsTable,
-        commentAuthor
+        commentAuthor,
+        tagId: tagsTable.id,
+        tagName: tagsTable.name,
+        tags: sql/* json */`
+        COALESCE(
+          (
+            SELECT json_agg(json_build_object('id', t.id, 'name', t.name))
+            FROM ${postTagsTable} pt
+            JOIN ${tagsTable} t ON t.id = pt.tag_id
+            WHERE pt.post_id = ${postsTable.id}
+          ),
+          '[]'::json
+        )
+      `.as('tags')
       })
       .from(postsTable)
       .innerJoin(postAuthor, eq(postsTable.authorId, postAuthor.id))
       .leftJoin(commentsTable, eq(postsTable.id, commentsTable.postId))
       .leftJoin(commentAuthor, eq(commentsTable.authorId, commentAuthor.id))
+      .leftJoin(postTagsTable, eq(postsTable.id, postTagsTable.postId))
+      .leftJoin(tagsTable, eq(postTagsTable.tagId, tagsTable.id))
       .where(eq(postsTable.id, id));
 
     if (results.length === 0) {
@@ -192,6 +209,14 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
         return null;
       }
       return await fetchPostWithAuthor(post[0].id);
+    },
+
+    async replacePostTags(postId: string, tagIds: string[]) {
+      // simple implementation: delete all, insert new
+      await db.delete(postTagsTable).where(eq(postTagsTable.postId, postId));
+      if (tagIds.length === 0) {return;}
+      const rows = tagIds.map(tagId => ({ postId, tagId }));
+      await db.insert(postTagsTable).values(rows);
     }
   };
 }

@@ -8,6 +8,7 @@ import { GetPostsListRespSchema } from 'src/api/routes/schemas/post/GetPostsList
 
 import { createPost } from 'src/controllers/post/create-post';
 import { getAllPosts } from 'src/controllers/post/get-all-posts';
+import { resolveFilterTagIds } from 'src/controllers/common/resolve-tags';
 
 const routes: FastifyPluginAsync = async function (f) {
   const fastify = f.withTypeProvider<ZodTypeProvider>();
@@ -23,6 +24,7 @@ const routes: FastifyPluginAsync = async function (f) {
     async req => {
       const post = await createPost({
         postRepo: fastify.repos.postRepo,
+        tagRepo: fastify.repos.tagRepo,
         data: { ...req.body, authorId: req.profile!.id }
       });
       return post;
@@ -41,7 +43,8 @@ const routes: FastifyPluginAsync = async function (f) {
         searchQuery: z.string().optional(),
         sortBy: z.enum(['title', 'createdAt', 'commentsCount']).optional(),
         sortDirection: z.enum(['asc', 'desc']).optional(),
-        minCommentsCount: z.coerce.number().int().min(0).optional()
+        minCommentsCount: z.coerce.number().int().min(0).optional(),
+        tagIds: z.array(z.string().uuid()).optional()
       })
     }
   }, async (req) => {
@@ -52,7 +55,8 @@ const routes: FastifyPluginAsync = async function (f) {
       searchQuery: req.query.searchQuery,
       sortBy: req.query.sortBy,
       sortDirection: req.query.sortDirection,
-      minCommentsCount: req.query.minCommentsCount
+      minCommentsCount: req.query.minCommentsCount,
+      tagIds: req.query.tagIds
     });
   });
 };

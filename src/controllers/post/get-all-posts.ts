@@ -9,6 +9,7 @@ export async function getAllPosts(params: {
   sortBy?: SortField;
   sortDirection?: SortDirection;
   minCommentsCount?: number;
+  tagIds?: string[];
 }) {
   const posts = await params.postRepo.getAllPosts({
     limit: params.limit ?? 10,
@@ -16,7 +17,8 @@ export async function getAllPosts(params: {
     searchQuery: params.searchQuery,
     sortBy: params.sortBy,
     sortDirection: params.sortDirection,
-    minCommentsCount: params.minCommentsCount
+    minCommentsCount: params.minCommentsCount,
+    tagIds: params.tagIds
   });
 
   if (!posts) {

@@ -2,6 +2,7 @@ import { Post } from 'src/types/post/IPost';
 import { CreatePostInput } from 'src/types/post/ICreatePostInput';
 import { Profile } from 'src/types/profile/IProfile';
 import { Comment } from 'src/types/comment/IComment';
+import { UpdatePostByIdInput } from 'src/api/routes/schemas/post/UpdatePostByIdReqSchema';
 
 export interface PaginationMeta {
   total: number;
@@ -10,6 +11,8 @@ export interface PaginationMeta {
   page: number;
   totalPages: number;
 }
+
+export type TagLite = { id: string; name: string };
 
 export type PostWithAuthor = Post & {
   author: Profile;
@@ -37,9 +40,11 @@ export interface IPostRepo {
       sortBy?: SortField;
       sortDirection?: SortDirection;
       minCommentsCount?: number;
+      tagIds?: string[];
     }
   ): Promise<PostsResult>;
   createPost(data: CreatePostInput): Promise<PostWithAuthor>;
   getPostById(id: string): Promise<PostWithAuthor | null>;
-  updatePostById(id: string, data: Partial<Post>): Promise<PostWithAuthor | null>;
+  updatePostById(id: string, data: UpdatePostByIdInput): Promise<PostWithAuthor | null>;
+  replacePostTags(postId: string, tagIds: string[]): Promise<void>;
 }

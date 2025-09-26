@@ -24,6 +24,7 @@ export const GetPostsListRespSchema = z.object({
     updatedAt: z.date(),
     createdAt: z.date(),
     commentsCount: z.number().optional()
+    // tags: z.array(z.object({ id: z.string().uuid(), name: z.string() }))
   }))
 });
 

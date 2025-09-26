@@ -17,6 +17,7 @@ export const GetPostByIdRespSchema = z.object({
   updatedAt: z.date(),
   createdAt: z.date(),
   comments: z.array(CreateCommentResSchema).optional()
+  // tags: z.array(z.object({ id: z.string().uuid(), name: z.string() }))
 });
 
 export type Post = z.infer<typeof GetPostByIdRespSchema>;
