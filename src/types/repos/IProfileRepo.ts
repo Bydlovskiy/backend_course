@@ -20,4 +20,7 @@ export interface IProfileRepo {
   updateProfileByEmail(
     data: { email: string; firstName: string; lastName: string, activatedAt?: Date }
   ): Promise<Profile>;
+  getAllSoftDeletedProfiles(): Promise<Profile[]>;
+  softDeleteById(id: string): Promise<void>;
+  softRestoreById(id: string): Promise<void>;
 }

@@ -9,7 +9,8 @@ export const profilesTable = pgTable('profiles', {
   role: varchar({ length: 64 }),
   createdAt: timestamp().defaultNow(),
   updatedAt: timestamp().defaultNow().$onUpdate(() => new Date()),
-  activatedAt: timestamp()
+  activatedAt: timestamp(),
+  deletedAt: timestamp()
 });
 
 export const postsTable = pgTable('posts', {
@@ -18,7 +19,8 @@ export const postsTable = pgTable('posts', {
   description: varchar({ length: 255 }),
   authorId: uuid().notNull().references(() => profilesTable.id),
   createdAt: timestamp().defaultNow(),
-  updatedAt: timestamp().defaultNow().$onUpdate(() => new Date())
+  updatedAt: timestamp().defaultNow().$onUpdate(() => new Date()),
+  deletedAt: timestamp()
 }, (t) => [
   index('posts_title_idx').using('gin', sql`${t.title} gin_trgm_ops`),
   index('posts_description_idx').using('gin', sql`${t.description} gin_trgm_ops`)
@@ -30,7 +32,8 @@ export const commentsTable = pgTable('comments', {
   authorId: uuid().notNull().references(() => profilesTable.id),
   text: text().notNull(),
   createdAt: timestamp().defaultNow(),
-  updatedAt: timestamp().defaultNow().$onUpdate(() => new Date())
+  updatedAt: timestamp().defaultNow().$onUpdate(() => new Date()),
+  deletedAt: timestamp()
 });
 
 // Tags: many-to-many with posts via post_tags

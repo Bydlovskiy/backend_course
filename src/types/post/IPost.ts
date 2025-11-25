@@ -9,6 +9,7 @@ export const PostSchema = z.object({
   authorId: z.string().uuid(),
   updatedAt: z.date(),
   createdAt: z.date(),
+  deletedAt: z.date().nullable().optional(),
   commentsCount: z.number().optional(),
   comments: z.array(CommentSchema).optional(),
   author: ProfileSchema.optional(),

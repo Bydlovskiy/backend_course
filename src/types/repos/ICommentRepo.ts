@@ -14,4 +14,6 @@ export interface ICommentRepo {
     data: { text: string }
   ): Promise<CommentWithAuthor | null>;
   deleteCommentById(id: string): Promise<boolean>;
+  softDeleteByAuthorId(authorId: string): Promise<void>;
+  softRestoreByAuthorId(authorId: string): Promise<void>;
 }

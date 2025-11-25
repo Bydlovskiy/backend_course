@@ -47,4 +47,6 @@ export interface IPostRepo {
   getPostById(id: string): Promise<PostWithAuthor | null>;
   updatePostById(id: string, data: UpdatePostByIdInput): Promise<PostWithAuthor | null>;
   replacePostTags(postId: string, tagIds: string[]): Promise<void>;
+  softDeleteByAuthorId(authorId: string): Promise<void>;
+  softRestoreByAuthorId(authorId: string): Promise<void>;
 }

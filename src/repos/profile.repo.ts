@@ -1,4 +1,4 @@
-import { eq, sql } from 'drizzle-orm';
+import { eq, sql, isNull, and, isNotNull } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { profilesTable } from 'src/services/drizzle/schemas/schema';
 import { IProfileRepo } from 'src/types/repos/IProfileRepo';
@@ -21,7 +21,7 @@ export function getProfileRepo(db: NodePgDatabase): IProfileRepo {
       const rows = await db
         .select()
         .from(profilesTable)
-        .where(eq(profilesTable.email, email))
+        .where(and(eq(profilesTable.email, email), isNull(profilesTable.deletedAt)))
         .limit(1);
       if (rows.length === 0) {return null;}
       return ProfileSchema.parse(rows[0]);
@@ -38,7 +38,7 @@ export function getProfileRepo(db: NodePgDatabase): IProfileRepo {
         whereClause = sql`(${profilesTable.email} ILIKE ${like} OR ${profilesTable.firstName} ILIKE ${like} OR ${profilesTable.lastName} ILIKE ${like})`;
       }
 
-      const baseQuery = db.select().from(profilesTable);
+      const baseQuery = db.select().from(profilesTable).where(isNull(profilesTable.deletedAt));
       if (whereClause) {
         (baseQuery as any).where(whereClause);
       }
@@ -46,13 +46,13 @@ export function getProfileRepo(db: NodePgDatabase): IProfileRepo {
       const totalResult = await db
         .select({ count: sql`count(*)` })
         .from(profilesTable)
-        .where(whereClause as any);
+        .where(and(isNull(profilesTable.deletedAt), whereClause as any));
       const total = Number(totalResult[0]?.count) || 0;
 
       const rows = await (db
         .select()
         .from(profilesTable)
-        .where(whereClause as any)
+        .where(and(isNull(profilesTable.deletedAt), whereClause as any))
         .limit(limit)
         .offset(offset));
 
@@ -73,6 +73,25 @@ export function getProfileRepo(db: NodePgDatabase): IProfileRepo {
         .where(eq(profilesTable.email, data.email))
         .returning();
       return ProfileSchema.parse(rows[0]);
+    },
+
+    async getAllSoftDeletedProfiles() {
+      const users = await db.select().from(profilesTable).where(isNotNull(profilesTable.deletedAt));
+      return users.map(r => ProfileSchema.parse(r));
+    },
+
+    async softDeleteById(id: string) {
+      await db
+        .update(profilesTable)
+        .set({ deletedAt: new Date() })
+        .where(eq(profilesTable.id, id));
+    },
+
+    async softRestoreById(id: string) {
+      await db
+        .update(profilesTable)
+        .set({ deletedAt: null })
+        .where(eq(profilesTable.id, id));
     }
   };
 }

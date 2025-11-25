@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, and, isNull } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { CommentSchema } from 'src/types/comment/IComment';
 import { ProfileSchema } from 'src/types/profile/IProfile';
@@ -17,7 +17,7 @@ export function getCommentRepo(db: NodePgDatabase): ICommentRepo {
       })
       .from(commentsTable)
       .innerJoin(profilesTable, eq(commentsTable.authorId, profilesTable.id))
-      .where(eq(commentsTable.id, id));
+      .where(and(isNull(commentsTable.deletedAt), eq(commentsTable.id, id)));
 
     if (rows.length === 0) {
       return null;
@@ -53,7 +53,7 @@ export function getCommentRepo(db: NodePgDatabase): ICommentRepo {
         })
         .from(commentsTable)
         .innerJoin(profilesTable, eq(commentsTable.authorId, profilesTable.id))
-        .where(eq(commentsTable.postId, postId))
+        .where(and(isNull(commentsTable.deletedAt), eq(commentsTable.postId, postId)))
         .orderBy(commentsTable.createdAt);
 
       return rows.map(({ comment, author }) => ({
@@ -81,6 +81,20 @@ export function getCommentRepo(db: NodePgDatabase): ICommentRepo {
         .where(eq(commentsTable.id, id))
         .returning({ id: commentsTable.id });
       return res.length > 0;
+    },
+    
+    async softDeleteByAuthorId(authorId: string) {
+      await db
+        .update(commentsTable)
+        .set({ deletedAt: new Date() })
+        .where(eq(commentsTable.authorId, authorId));
+    },
+
+    async softRestoreByAuthorId(authorId: string) {
+      await db
+        .update(commentsTable)
+        .set({ deletedAt: null })
+        .where(eq(commentsTable.authorId, authorId));
     }
   };
 }

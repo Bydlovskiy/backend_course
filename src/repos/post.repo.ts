@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { eq, count, desc, asc, sql, inArray, and } from 'drizzle-orm';
+import { eq, count, desc, asc, sql, inArray, and, isNull } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
@@ -39,7 +39,7 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
       `.as('tags')
       })
       .from(postsTable)
-      .innerJoin(postAuthor, eq(postsTable.authorId, postAuthor.id))
+      .leftJoin(postAuthor, eq(postsTable.authorId, postAuthor.id))
       .leftJoin(commentsTable, eq(postsTable.id, commentsTable.postId))
       .leftJoin(commentAuthor, eq(commentsTable.authorId, commentAuthor.id))
       .leftJoin(postTagsTable, eq(postsTable.id, postTagsTable.postId))
@@ -50,7 +50,10 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
         commentAuthor.id,
         tagsTable.id,
         tagsTable.name)
-      .where(eq(postsTable.id, id));
+      .where(and(eq(postsTable.id, id),
+       isNull(postsTable.deletedAt),
+       isNull(commentsTable.deletedAt))
+      );
 
     if (results.length === 0) {
       return null;
@@ -156,7 +159,7 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
         .leftJoin(commentsTable, eq(postsTable.id, commentsTable.postId))
         .leftJoin(postTagsTable, eq(postsTable.id, postTagsTable.postId))
         .leftJoin(tagsTable, eq(postTagsTable.tagId, tagsTable.id))
-        .where(combinedWhere)
+        .where(and(isNull(postsTable.deletedAt), combinedWhere))
         .groupBy(postsTable.id)
         .as('posts_with_comments');
       
@@ -246,11 +249,24 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
     },
 
     async replacePostTags(postId: string, tagIds: string[]) {
-      // simple implementation: delete all, insert new
       await db.delete(postTagsTable).where(eq(postTagsTable.postId, postId));
       if (tagIds.length === 0) {return;}
       const rows = tagIds.map(tagId => ({ postId, tagId }));
       await db.insert(postTagsTable).values(rows);
+    },
+
+    async softDeleteByAuthorId(authorId: string) {
+      await db
+        .update(postsTable)
+        .set({ deletedAt: new Date() })
+        .where(eq(postsTable.authorId, authorId));
+    },
+
+    async softRestoreByAuthorId(authorId: string) {
+      await db
+        .update(postsTable)
+        .set({ deletedAt: null })
+        .where(eq(postsTable.authorId, authorId));
     }
   };
 }
