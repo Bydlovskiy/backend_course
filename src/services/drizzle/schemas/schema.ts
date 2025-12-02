@@ -1,4 +1,4 @@
-import { uuid, pgTable, varchar, timestamp, text, index, primaryKey } from 'drizzle-orm/pg-core';
+import { uuid, pgTable, varchar, timestamp, text, index, primaryKey, jsonb } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
 export const profilesTable = pgTable('profiles', {
@@ -52,3 +52,12 @@ export const postTagsTable = pgTable('post_tags', {
   index('post_tags_post_idx').on(t.postId),
   index('post_tags_tag_idx').on(t.tagId)
 ]);
+
+export const archivesTable = pgTable('archives', {
+  id: uuid().primaryKey().default(sql`uuid_generate_v4()`),
+  userId: uuid().notNull(),
+  profile: jsonb().notNull(),
+  payload: jsonb().notNull(),
+  createdAt: timestamp().defaultNow()
+});
+

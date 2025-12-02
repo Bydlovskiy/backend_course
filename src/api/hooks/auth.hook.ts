@@ -14,12 +14,12 @@ export const authHook: preHandlerAsyncHookHandler = async function (request) {
       || request.headers[TOKEN_HEADER_NAME.toLowerCase()]) as string;
       
     if (!token) {
-      throw new Error('No token');
+      throw new HttpError(401, 'No token provided');
     }
 
     const bearerTokenMatch = token.match(/Bearer\s+([A-Za-z0-9-._~+/]+=*)$/);
     if (!bearerTokenMatch) {
-      throw new Error('Token in wrong format');
+      throw new HttpError(401, 'Token in wrong format');
     }
 
     const [, bearerToken] = bearerTokenMatch;
@@ -31,7 +31,7 @@ export const authHook: preHandlerAsyncHookHandler = async function (request) {
 
     const profile = await this.repos.profileRepo.findByEmail(identityUser.email);
     if (!profile) {
-      throw new Error('No profile');
+      throw new HttpError(401, 'No profile found for user');
     }
 
     request.log = request.log.child({

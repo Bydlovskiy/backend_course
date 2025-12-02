@@ -1,9 +1,8 @@
-import { eq, and, isNull } from 'drizzle-orm';
+import { eq, and, isNull, inArray } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { CommentSchema } from 'src/types/comment/IComment';
 import { ProfileSchema } from 'src/types/profile/IProfile';
-import { commentsTable } from 'src/services/drizzle/schemas/schema';
-import { profilesTable } from 'src/services/drizzle/schemas/schema';
+import { profilesTable, commentsTable } from 'src/services/drizzle/schemas/schema';
 import { ICommentRepo } from 'src/types/repos/ICommentRepo';
 
 import { UpdateCommentByIdInput } from 'src/types/comment/IUpdateCommentByIdInput';
@@ -95,6 +94,31 @@ export function getCommentRepo(db: NodePgDatabase): ICommentRepo {
         .update(commentsTable)
         .set({ deletedAt: null })
         .where(eq(commentsTable.authorId, authorId));
+    },
+
+    async getCommentsByAuthorId(authorId: string) {
+      const rows = await db
+        .select({
+          comment: commentsTable,
+          author: profilesTable
+        })
+        .from(commentsTable)
+        .innerJoin(profilesTable, eq(commentsTable.authorId, profilesTable.id))
+        .where(eq(commentsTable.authorId, authorId));
+
+      return rows.map(({ comment, author }) => ({
+        ...CommentSchema.parse(comment),
+        author: ProfileSchema.parse(author)
+      }));
+    },
+
+    async deleteCommentsByAuthorId(authorId: string) {
+      await db.delete(commentsTable).where(eq(commentsTable.authorId, authorId));
+    },
+
+    async deleteCommentsByPostIds(postIds: string[]) {
+      if (postIds.length === 0) {return;}
+      await db.delete(commentsTable).where(inArray(commentsTable.postId, postIds));
     }
   };
 }

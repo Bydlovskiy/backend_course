@@ -6,6 +6,7 @@ import { IMailService } from 'src/types/IMailService';
 import { IdentityUser } from 'src/types/IdentityUser';
 import { IStorageService } from './IStorageService';
 import { Profile } from 'src/types/profile/IProfile';
+import { ITransactionManager } from './ITransaction';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -14,7 +15,8 @@ declare module 'fastify' {
     repos: IRepos;
     identityService: IIdentityService,
     mailService: IMailService,
-    storageService: IStorageService
+    storageService: IStorageService,
+    transaction: ITransactionManager;
   }
 
   interface FastifyRequest {

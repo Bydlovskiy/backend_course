@@ -8,7 +8,6 @@ import { GetPostsListRespSchema } from 'src/api/routes/schemas/post/GetPostsList
 
 import { createPost } from 'src/controllers/post/create-post';
 import { getAllPosts } from 'src/controllers/post/get-all-posts';
-import { resolveFilterTagIds } from 'src/controllers/common/resolve-tags';
 
 const routes: FastifyPluginAsync = async function (f) {
   const fastify = f.withTypeProvider<ZodTypeProvider>();

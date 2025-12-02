@@ -43,6 +43,20 @@
       "when": 1763990790056,
       "tag": "0005_sleepy_reavers",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1764668180466,
+      "tag": "0006_curved_omega_flight",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1764702198183,
+      "tag": "0007_ordinary_pepper_potts",
+      "breakpoints": true
     }
   ]
 }

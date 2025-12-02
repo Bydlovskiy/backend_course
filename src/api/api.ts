@@ -18,7 +18,7 @@ import routePrinter from './plugins/route-printer.plugin';
 import { getAWSCognitoService } from 'src/services/aws/cognito/cognito.service';
 import { setupSwagger } from './plugins/swagger.plugin';
 import { getLoggerOptions } from './plugins/logger.plugin';
-import { getDb, dbHealthCheck } from 'src/services/drizzle/drizzle.service';
+import { getDb, dbHealthCheck, getTransactionManager } from 'src/services/drizzle/drizzle.service';
 
 async function run() {
   const server = fastify({
@@ -80,6 +80,8 @@ async function run() {
     })
   );
   server.decorate('repos', getRepos(server.db));
+
+  server.decorate('transaction', getTransactionManager(server.db));
 
   server.register(autoTagging);
 

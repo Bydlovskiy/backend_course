@@ -92,6 +92,20 @@ export function getProfileRepo(db: NodePgDatabase): IProfileRepo {
         .update(profilesTable)
         .set({ deletedAt: null })
         .where(eq(profilesTable.id, id));
+    },
+
+    async findById(id: string) {
+      const rows = await db
+        .select()
+        .from(profilesTable)
+        .where(eq(profilesTable.id, id))
+        .limit(1);
+      if (rows.length === 0) {return null;}
+      return ProfileSchema.parse(rows[0]);
+    },
+
+    async deleteById(id: string) {
+      await db.delete(profilesTable).where(eq(profilesTable.id, id));
     }
   };
 }

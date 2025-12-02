@@ -8,7 +8,7 @@ import { postTagsTable } from 'src/services/drizzle/schemas/schema';
 import { tagsTable } from 'src/services/drizzle/schemas/schema';
 import { commentsTable } from 'src/services/drizzle/schemas/schema';
 import { profilesTable } from 'src/services/drizzle/schemas/schema';
-import { IPostRepo, SortDirection, SortField } from 'src/types/repos/IPostRepo';
+import { IPostRepo, SortDirection, SortField, PostWithAuthor } from 'src/types/repos/IPostRepo';
 
 import { UpdatePostByIdInput } from 'src/types/post/IUpdatePostById';
 import { CreatePostInput } from 'src/types/post/ICreatePostInput';
@@ -21,47 +21,52 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
     const postAuthor = alias(profilesTable, 'post_author');
     const commentAuthor = alias(profilesTable, 'comment_author');
 
-    const results = await db
+    const baseRows = await db
       .select({
         post: postsTable,
-        postAuthor,
-        comment: commentsTable,
-        commentAuthor,
-        tagId: tagsTable.id,
-        tagName: tagsTable.name,
-        tags: sql`
-        COALESCE(
-          JSON_AGG(
-            JSON_BUILD_OBJECT('id', ${tagsTable.id}, 'name', ${tagsTable.name})
-          ) FILTER (WHERE ${tagsTable.id} IS NOT NULL),
-          '[]'
-        )
-      `.as('tags')
+        postAuthor
       })
       .from(postsTable)
       .leftJoin(postAuthor, eq(postsTable.authorId, postAuthor.id))
-      .leftJoin(commentsTable, eq(postsTable.id, commentsTable.postId))
-      .leftJoin(commentAuthor, eq(commentsTable.authorId, commentAuthor.id))
-      .leftJoin(postTagsTable, eq(postsTable.id, postTagsTable.postId))
-      .leftJoin(tagsTable, eq(postTagsTable.tagId, tagsTable.id))
-      .groupBy(postsTable.id,
-        postAuthor.id,
-        commentsTable.id,
-        commentAuthor.id,
-        tagsTable.id,
-        tagsTable.name)
-      .where(and(eq(postsTable.id, id),
-       isNull(postsTable.deletedAt),
-       isNull(commentsTable.deletedAt))
-      );
+      .where(eq(postsTable.id, id));
 
-    if (results.length === 0) {
+    if (baseRows.length === 0) {
       return null;
     }
 
-    const base = results[0];
+    const base = baseRows[0];
 
-    const comments = results
+    const tagsRows = await db
+      .select({
+        tags: sql`
+          COALESCE(
+            JSON_AGG(
+              JSON_BUILD_OBJECT('id', ${tagsTable.id}, 'name', ${tagsTable.name})
+            ) FILTER (WHERE ${tagsTable.id} IS NOT NULL),
+            '[]'
+          )
+        `.as('tags')
+      })
+      .from(postTagsTable)
+      .leftJoin(tagsTable, eq(postTagsTable.tagId, tagsTable.id))
+      .where(eq(postTagsTable.postId, id));
+
+    const tags = tagsRows[0]?.tags ?? '[]';
+
+    const commentRows = await db
+      .select({
+        comment: commentsTable,
+        commentAuthor
+      })
+      .from(commentsTable)
+      .leftJoin(commentAuthor, eq(commentsTable.authorId, commentAuthor.id))
+      .where(and(
+        eq(commentsTable.postId, id),
+        isNull(commentsTable.deletedAt)
+      ))
+      .orderBy(commentsTable.createdAt);
+
+    const comments = commentRows
       .filter(r => r.comment)
       .map(r => ({
         ...r.comment!,
@@ -71,7 +76,7 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
     return {
       ...PostSchema.parse({
         ...base.post,
-        tags: base.tags
+        tags
       }),
       author: base.postAuthor,
       comments
@@ -123,7 +128,6 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
         commentsCountFilter = sql`"comments_count" >= ${minCommentsCount}`;
       }
 
-      // Build tag filter: posts that have AT LEAST ONE of the provided tagIds (ANY-match)
       const tagFilterWhere = tagIds.length > 0
         ? sql`${postsTable.id} IN (
             SELECT ${postTagsTable.postId}
@@ -132,7 +136,6 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
           )`
         : undefined;
 
-      // Combine search and tag filters
       const combinedWhere = searchWhereClause && tagFilterWhere
         ? and(searchWhereClause, tagFilterWhere)
         : (searchWhereClause || tagFilterWhere);
@@ -146,13 +149,13 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
           createdAt: postsTable.createdAt,
           updatedAt: postsTable.updatedAt,
           tags: sql`
-              COALESCE(
-                JSON_AGG(
-                  JSON_BUILD_OBJECT('id', ${tagsTable.id}, 'name', ${tagsTable.name})
-                ) FILTER (WHERE ${tagsTable.id} IS NOT NULL),
-                '[]'
-              )
-            `.as('tags'),
+            COALESCE(
+              JSON_AGG(
+                DISTINCT JSONB_BUILD_OBJECT('id', ${tagsTable.id}, 'name', ${tagsTable.name})
+              ) FILTER (WHERE ${tagsTable.id} IS NOT NULL),
+              '[]'::json
+            )
+          `.as('tags'),
           commentsCount: count(commentsTable.id).as('comments_count')
         })
         .from(postsTable)
@@ -267,6 +270,22 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
         .update(postsTable)
         .set({ deletedAt: null })
         .where(eq(postsTable.authorId, authorId));
+    },
+
+    async getPostsByAuthorId(authorId: string) {
+      const rows = await db
+        .select({
+          id: postsTable.id
+        })
+        .from(postsTable)
+        .where(eq(postsTable.authorId, authorId));
+      
+      const posts = await Promise.all(rows.map(r => fetchPostWithAuthor(r.id)));
+      return posts.filter((p): p is PostWithAuthor => p !== null);
+    },
+
+    async deletePostsByAuthorId(authorId: string) {
+      await db.delete(postsTable).where(eq(postsTable.authorId, authorId));
     }
   };
 }

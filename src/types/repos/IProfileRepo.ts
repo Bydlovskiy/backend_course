@@ -23,4 +23,6 @@ export interface IProfileRepo {
   getAllSoftDeletedProfiles(): Promise<Profile[]>;
   softDeleteById(id: string): Promise<void>;
   softRestoreById(id: string): Promise<void>;
+  findById(id: string): Promise<Profile | null>;
+  deleteById(id: string): Promise<void>;
 }

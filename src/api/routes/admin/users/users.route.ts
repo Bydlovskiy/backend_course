@@ -6,6 +6,12 @@ import { getAllUsers } from 'src/controllers/users/get-all-users';
 import { softDelete } from 'src/controllers/delete/soft-delete';
 import { softRestore } from 'src/controllers/delete/soft-restore';
 import { getAllSoftDeletedUsers } from 'src/controllers/delete/get-all-soft-deleted';
+import { hardDelete } from 'src/controllers/delete/hard-delete';
+import { restoreHardDeleted } from 'src/controllers/delete/restore-hard-deleted';
+import { getAllHardDeletedUsers } from 'src/controllers/delete/get-all-hard-deleted';
+
+import { GetSoftDeletedUsersResSchema } from 'src/api/routes/schemas/delete/GetSoftDeletedUsersResSchema';
+import { GetHardDeletedUsersResSchema } from 'src/api/routes/schemas/delete/GetHardDeletedUsersResSchema';
 
 const routes: FastifyPluginAsync = async function (f) {
   const fastify = f.withTypeProvider<ZodTypeProvider>();
@@ -44,18 +50,7 @@ const routes: FastifyPluginAsync = async function (f) {
   fastify.get('/soft-deleted', {
     schema: {
       response: {
-        200: z.object({
-          users: z.array(z.object({
-            email: z.string().email(),
-            firstName: z.string().optional(),
-            lastName: z.string().optional(),
-            id: z.string().uuid().optional(),
-            role: z.enum(['user', 'admin']).optional(),
-            createdAt: z.date().optional(),
-            updatedAt: z.date().optional(),
-            deletedAt: z.date().nullable().optional()
-          }))
-        })
+        200: GetSoftDeletedUsersResSchema
       }
     }
   }, async () => {
@@ -63,6 +58,19 @@ const routes: FastifyPluginAsync = async function (f) {
       profileRepo: fastify.repos.profileRepo
     });
     return { users: result };
+  });
+
+  fastify.get('/hard-deleted', {
+    schema: {
+      response: {
+        200: GetHardDeletedUsersResSchema 
+      }
+    }
+  }, async () => {
+    const result = await getAllHardDeletedUsers({
+      archiveRepo: fastify.repos.archiveRepo
+    });
+    return { archives: result };
   });
 
   fastify.post('/deactivate', {
@@ -92,7 +100,8 @@ const routes: FastifyPluginAsync = async function (f) {
   fastify.post('/delete', {
     schema: {
       body: z.object({
-        id: z.string().uuid()
+        id: z.string().uuid(),
+        email: z.string().email()
       }),
       response: { 200: z.object({ success: z.literal(true) }) }
     }
@@ -101,7 +110,10 @@ const routes: FastifyPluginAsync = async function (f) {
       profileRepo: fastify.repos.profileRepo,
       postRepo: fastify.repos.postRepo,
       commentRepo: fastify.repos.commentRepo,
-      userId: req.body.id
+      userId: req.body.id,
+      userEmail: req.body.email,
+      transactionManager: fastify.transaction,
+      identityService: fastify.identityService
     });
     return { success: true } as const;
   });
@@ -109,7 +121,8 @@ const routes: FastifyPluginAsync = async function (f) {
   fastify.post('/restore', {
     schema: {
       body: z.object({
-        id: z.string().uuid()
+        id: z.string().uuid(),
+        email: z.string().email()
       }),
       response: { 200: z.object({ success: z.literal(true) }) }
     }
@@ -118,7 +131,63 @@ const routes: FastifyPluginAsync = async function (f) {
       profileRepo: fastify.repos.profileRepo,
       postRepo: fastify.repos.postRepo,
       commentRepo: fastify.repos.commentRepo,
-      userId: req.body.id
+      userId: req.body.id,
+      userEmail: req.body.email,
+      transactionManager: fastify.transaction,
+      identityService: fastify.identityService
+    });
+    return { success: true } as const;
+  });
+
+  fastify.post('/hard-delete', {
+    schema: {
+      body: z.object({
+        id: z.string().uuid(),
+        email: z.string().email()
+      }),
+      response: { 
+        200: z.object({ success: z.literal(true) }),
+        500: z.object({ success: z.literal(false) })
+      }
+    }
+  }, async (req, reply) => {
+    try {
+      await hardDelete({
+        profileRepo: fastify.repos.profileRepo,
+        postRepo: fastify.repos.postRepo,
+        commentRepo: fastify.repos.commentRepo,
+        archiveRepo: fastify.repos.archiveRepo,
+        userId: req.body.id,
+        userEmail: req.body.email,
+        transactionManager: fastify.transaction, 
+        identityService: fastify.identityService
+      });
+      return { success: true } as const;
+    } catch (e) {
+      console.error('Hard delete failed:', e);
+      reply.code(500);
+      return { success: false } as const;
+    }
+  });
+
+  fastify.post('/restore-hard-deleted', {
+    schema: {
+      body: z.object({
+        id: z.string().uuid(),
+        email: z.string().email()
+      }),
+      response: { 200: z.object({ success: z.literal(true) }) }
+    }
+  }, async (req) => {
+    await restoreHardDeleted({
+      profileRepo: fastify.repos.profileRepo,
+      postRepo: fastify.repos.postRepo,
+      commentRepo: fastify.repos.commentRepo,
+      archiveRepo: fastify.repos.archiveRepo,
+      userId: req.body.id,
+      userEmail: req.body.email,
+      transactionManager: fastify.transaction,
+      identityService: fastify.identityService
     });
     return { success: true } as const;
   });
