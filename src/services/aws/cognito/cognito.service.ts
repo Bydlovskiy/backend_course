@@ -51,7 +51,6 @@ export function getAWSCognitoService(region: string): IIdentityService {
         const subId = rawUserData.sub;
         const email = rawUserData.email;
 
-        // Enrich with adminGetUser to know Enabled/first/last/mfa
         let isEnabled: boolean | undefined;
         let firstName: string | undefined;
         let lastName: string | undefined;

@@ -46,7 +46,7 @@ const adminPostsRoutes: FastifyPluginAsync = async function (f) {
         })
       }
     }, async (req) => {
-      const rawTagIds = (req.query as any)['tagIds[]'];
+      const rawTagIds = req.query['tagIds[]'];
       const tagIds = Array.isArray(rawTagIds)
         ? rawTagIds
         : (typeof rawTagIds === 'string' ? [rawTagIds] : undefined);

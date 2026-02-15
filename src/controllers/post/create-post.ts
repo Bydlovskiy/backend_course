@@ -18,7 +18,7 @@ export async function createPost(params: {
   const tagIds = await resolveExistingTagIds(
     { 
       tagRepo: params.tagRepo,
-      tags: (params.data as any).tags 
+      tags: params.data.tags 
     }
   );
   

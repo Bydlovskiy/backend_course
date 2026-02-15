@@ -1,3 +1,4 @@
+import { ERole } from 'src/types/profile/Role';
 import { z } from 'zod';
 
 export const GetHardDeletedUsersResSchema = z.object({
@@ -12,7 +13,7 @@ export const GetHardDeletedUsersResSchema = z.object({
       email: z.string().email(),
       firstName: z.string(),
       lastName: z.string(),
-      role: z.enum(['user', 'admin'])
+      role: z.enum([ERole.admin, ERole.user])
     }),
     payload: z.object({
       comments: z.array(z.object({
@@ -32,3 +33,5 @@ export const GetHardDeletedUsersResSchema = z.object({
     })
   }))
 });
+
+export type GetHardDeletedUsersRes = z.infer<typeof GetHardDeletedUsersResSchema>;

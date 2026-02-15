@@ -1,13 +1,10 @@
-export interface ArchivePayload {
-  user: any;
-  posts: any[];
-  comments: any[];
-  postTags: any[];
-}
+// import { GetArchivesResSchema } from '../archive/IArchive';
+// import { CreateArchiveInput } from '../archive/ICreateArchiveInput';
+import { GetHardDeletedUsersRes } from 'src/api/routes/schemas/delete/GetHardDeletedUsersResSchema';
 
 export interface IArchiveRepo {
-  getAllArchives(): Promise<any[]>;
-  getArchiveById(id: string): Promise<any>;
+  getAllArchives(): Promise<GetHardDeletedUsersRes['archives']>;
+  getArchiveById(id: string): Promise<any | null>;
   createArchive(data: any): Promise<void>;
   deleteArchive(id: string): Promise<void>;
 }

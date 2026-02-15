@@ -24,13 +24,11 @@ export async function resolveExistingTagIds(params: {
     ids.push(existing.id);
   }
 
-  // Deduplicate while preserving order
   const seen = new Set<string>();
   const unique = ids.filter(id => (seen.has(id) ? false : (seen.add(id), true)));
   return unique;
 }
 
-// Tolerant resolver for query filters: ignore unknown names, deduplicate IDs
 export async function resolveFilterTagIds(params: {
   tagRepo: ITagRepo;
   tags?: IncomingTag[] | null | undefined;

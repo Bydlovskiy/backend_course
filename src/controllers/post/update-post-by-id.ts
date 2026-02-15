@@ -19,7 +19,7 @@ export async function updatePostById(params: {
   const tagIds = await resolveExistingTagIds(
     { 
       tagRepo: params.tagRepo,
-      tags: (params.data as any).tags 
+      tags: params.data.tags 
     }
   );
   if (tagIds.length > 0) {

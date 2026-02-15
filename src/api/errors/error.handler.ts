@@ -32,7 +32,6 @@ export const errorHandler = function (
     message = error.message;
   }
 
-  // handle fastify errors
   if ('statusCode' in error) {
     statusCode = error.statusCode as number;
   }

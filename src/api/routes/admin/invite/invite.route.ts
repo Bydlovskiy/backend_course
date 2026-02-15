@@ -16,7 +16,7 @@ const routes: FastifyPluginAsync = async function (f) {
       schema: {
         body: z.object({
           email: z.string().email(),
-          role: z.enum(['admin', 'user']),
+          role: z.enum([ERole.admin, ERole.user]),
           sender: z.enum(['sendGrid', 'resend'])
         }),
         response: {

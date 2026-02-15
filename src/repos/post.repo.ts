@@ -15,6 +15,7 @@ import { CreatePostInput } from 'src/types/post/ICreatePostInput';
 
 import { PostSchema } from 'src/types/post/IPost';
 import { HttpError } from 'src/api/errors/HttpError';
+import { ERole } from 'src/types/profile/Role';
 
 export function getPostRepo(db: NodePgDatabase): IPostRepo {
   async function fetchPostWithAuthor(id: string) {
@@ -222,7 +223,7 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
               email: z.string().email(),
               firstName: z.string(),
               lastName: z.string(),
-              role: z.enum(['user', 'admin']),
+              role: z.enum([ERole.admin, ERole.user]),
               createdAt: z.date(),
               updatedAt: z.date()
             })

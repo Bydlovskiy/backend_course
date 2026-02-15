@@ -1,3 +1,7 @@
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+--> statement-breakpoint
+CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+--> statement-breakpoint
 CREATE TABLE "comments" (
 	"id" uuid PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
 	"post_id" uuid NOT NULL,

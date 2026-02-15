@@ -9,8 +9,9 @@ import { getPostRepo } from 'src/repos/post.repo';
 import { getCommentRepo } from 'src/repos/comment.repo';
 import { getArchiveRepo } from 'src/repos/archive.repo';
 
-import { CreatePostInput } from 'src/types/post/ICreatePostInput';
-import { Profile } from 'src/types/profile/IProfile';
+import { validateUserExists } from 'src/controllers/common/validate-user-exists';
+import { IIdentityService } from 'src/types/IIdentityService';
+import { CreateHardDeletedReq } from 'src/types/delete/CreateHardDeletedReqSchema';
 
 export async function hardDelete(params: {
   profileRepo: IProfileRepo;
@@ -18,24 +19,19 @@ export async function hardDelete(params: {
   commentRepo: ICommentRepo;
   archiveRepo: IArchiveRepo;
   userId: string;
-  userEmail: string;
   transactionManager: ITransactionManager;
-  identityService: any;
+  identityService: IIdentityService;
 }) {
-  const { 
+  const {
     profileRepo,
     postRepo,
     commentRepo,
     userId,
-    userEmail,
     transactionManager,
     identityService
   } = params;
 
-  const user = await profileRepo.findById(userId);
-  if (!user) {
-    throw new Error('User not found');
-  }
+  const user = await validateUserExists(profileRepo, userId);
 
   const posts = await postRepo.getPostsByAuthorId(userId);
   const postIds = posts.map(p => p.id);
@@ -44,18 +40,7 @@ export async function hardDelete(params: {
   const commentsOnUserPosts = posts.flatMap(p => p.comments || [])
     .filter(c => c.authorId !== userId);
 
-  const archivePayload: {
-    profile: Profile;
-    userId: string;
-    payload: {
-      posts: (CreatePostInput & { id: string })[];
-      comments: {
-        text: string;
-        authorId: string;
-        postId: string;
-      }[];
-    };
-  } = {
+  const archivePayload: CreateHardDeletedReq = {
     profile: user,
     userId,
     payload: {
@@ -74,10 +59,10 @@ export async function hardDelete(params: {
   };
 
   await transactionManager.execute(async ({ sharedTx }) => {
-    const txProfileRepo = getProfileRepo(sharedTx as any);
-    const txPostRepo = getPostRepo(sharedTx as any);
-    const txCommentRepo = getCommentRepo(sharedTx as any);
-    const txArchiveRepo = getArchiveRepo(sharedTx as any);
+    const txProfileRepo = getProfileRepo(sharedTx);
+    const txPostRepo = getPostRepo(sharedTx);
+    const txCommentRepo = getCommentRepo(sharedTx);
+    const txArchiveRepo = getArchiveRepo(sharedTx);
 
     await txArchiveRepo.createArchive(archivePayload);
 
@@ -87,5 +72,5 @@ export async function hardDelete(params: {
     await txProfileRepo.deleteById(userId);
   });
 
-  await identityService.deactivateUser(userEmail);
+  await identityService.deactivateUser(user.email);
 }

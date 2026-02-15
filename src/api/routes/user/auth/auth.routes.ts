@@ -31,8 +31,8 @@ const routes: FastifyPluginAsync = async function (f) {
   }, async (req) => {
     const { email, password, firstName, lastName } = req.body; 
     const result = await createAccount({
-      identityService: (fastify as any).identityService,
-      profileRepo: (fastify as any).repos.profileRepo,
+      identityService: fastify.identityService,
+      profileRepo: fastify.repos.profileRepo,
       email,
       password,
       firstName,

@@ -36,7 +36,6 @@ export const commentsTable = pgTable('comments', {
   deletedAt: timestamp()
 });
 
-// Tags: many-to-many with posts via post_tags
 export const tagsTable = pgTable('tags', {
   id: uuid().primaryKey().default(sql`uuid_generate_v4()`),
   name: varchar({ length: 64 }).notNull().unique(),
