@@ -1,9 +1,9 @@
-import { Post } from 'src/types/post/IPost';
+import { DeletedPostRes } from 'src/types/delete/DeletedPostResSchema';
 import { IPostRepo } from 'src/types/repos/IPostRepo';
 
 export async function restorePosts(
   postRepo: IPostRepo,
-  posts: Post[],
+  posts: DeletedPostRes[],
   newUserId: string
 ): Promise<Map<string, string>> {
   const postIdMap = new Map<string, string>();

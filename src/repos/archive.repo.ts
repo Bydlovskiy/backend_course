@@ -2,8 +2,9 @@ import { eq } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { archivesTable } from 'src/services/drizzle/schemas/schema';
 import { IArchiveRepo } from 'src/types/repos/IArchiveRepo';
-// import { CreateArchiveInput } from 'src/types/archive/ICreateArchiveInput';
 import { GetHardDeletedUsersResSchema } from 'src/api/routes/schemas/delete/GetHardDeletedUsersResSchema';
+import { GetHardDeletedReqSchema } from 'src/types/delete/GetHardDeletedArchiveSchema';
+import { CreateHardDeletedReq } from 'src/types/delete/CreateHardDeletedReqSchema';
 
 export function getArchiveRepo(db: NodePgDatabase): IArchiveRepo {
   return {
@@ -22,12 +23,11 @@ export function getArchiveRepo(db: NodePgDatabase): IArchiveRepo {
       if (result.length === 0 || !result[0]) {
         return null;
       }
-        return result[0];
 
-      // return ArchiveSchema.parse(result[0]);
+      return GetHardDeletedReqSchema.parse(result[0]);
     },
 
-    createArchive: async (data: any) => {
+    createArchive: async (data: CreateHardDeletedReq) => {
       return await db.insert(archivesTable).values(data);
     },
 
